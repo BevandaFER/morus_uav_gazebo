@@ -21,7 +21,7 @@
   <xacro:include filename="$(find morus_description)/urdf/morus.urdf.xacro" />
   <xacro:include filename="$(find rotors_description)/urdf/component_snippets.xacro" />
 
- <!-- Mount an IMU-->
+ <!-- Mount an IMU - inertial measurement unit-->
   <gazebo>
     <plugin filename="libhector_gazebo_ros_imu.so" name="imu_ros">
       <robotNamespace>$(arg name)</robotNamespace>

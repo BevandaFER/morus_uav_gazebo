@@ -2,6 +2,18 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Main multirotor link -->
+  <xacro:property name="link_inertia">
+    <inertia
+    ixx="${(link_length * link_mass)/12}"
+    iyy="${(link_length * link_mass)/12}"
+    izz="${(link_length * link_mass)/12}"
+    ixy="0.0" ixz="0.0" iyz="0.0" />
+  </xacro:property>
+  
+  
+  <xacro:property name="link_length" value="0.5" />
+  <xacro:property name="link_mass" value="1" />
+  
   <xacro:macro name="multirotor_base_macro"
     params="robot_namespace mass body_width body_height mesh_file mesh_file_mass *inertia">
     
@@ -21,9 +33,8 @@
       <visual>
         <origin xyz="0 0 0.125" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://morus_description/meshes/${mesh_file}"
-            scale="1 1 1" />
-          <!--box size="${body_width} ${body_width} ${body_height}"/--> <!-- [m] [m] [m] -->
+          <!-- mesh filename="package://morus_description/meshes/${mesh_file}" scale="1 1 1" / -->
+          <box size="${body_width} ${body_width} ${body_height}" /> <!-- [m] [m] [m] -->
         </geometry>
       </visual>
 
@@ -60,6 +71,15 @@
         <rotorVelocitySlowdownSim>${rotor_velocity_slowdown_sim}</rotorVelocitySlowdownSim>
       </plugin>
     </gazebo>
+    
+    <xacro:manipulator_left
+        link_length="${link_length}"
+        link_mass="${link_mass}"
+        parent="base_link">
+        <origin xyz="${-(arm_length)} 0 0" rpy="0 0 0" />
+        <xacro:insert_block name="link_inertia"/>
+    </xacro:manipulator_left>
+  
   </xacro:macro>
 
   <!-- Macro file for movable mass. It defines joint between mass and stick, and link which defines actual mass. Stick
@@ -76,8 +96,8 @@
     </joint>
     <link name="movable_mass_${mass_number}">
       <visual>
-        <!--origin rpy="0 0 ${orientation}" xyz="0 0 ${0*movable_mass_dimension/2}"/-->
-        <origin rpy="0 0 ${orientation}" xyz="0 0 0"/>
+        <!--origin rpy="0 0 ${orientation}" xyz="0 0 ${0*movable_mass_dimension/2}"/>
+        <origin rpy="0 0 ${orientation}" xyz="0 0 0"/-->
         <geometry>
           <!--mesh filename="package://morus_description/meshes/${mesh_file_mass}"
             scale="1 1 1" /-->
@@ -123,11 +143,13 @@
         <xacro:insert_block name="inertia" />
       </inertial>
       <visual>
+        <!-- origin xyz="10 10 10" rpy="0 0 0" /-->
+        <xacro:insert_block name="origin" />
         <geometry>
-          <!-- <cylinder length="0.005" radius="${radius_rotor}"/> --> <!-- [m] -->
-          <mesh filename="package://morus_description/meshes/propeller_${direction}.dae"
-            scale="0.0025 0.0025 0.0025" />
-          <!-- <box size="${2*radius_rotor} 0.01 0.005"/> -->
+          <cylinder length="0.005" radius="${radius_rotor}"/> <!-- [m] -->
+          <!--mesh filename="package://morus_description/meshes/propeller_${direction}.dae"
+            scale="0.0025 0.0025 0.0025" /-->
+          <!--box size="${2*radius_rotor} 4 0.005"/-->
         </geometry>
       </visual>
       <collision>
@@ -180,12 +202,12 @@
       <child link="land_gear_${gear_num}"/>
     </joint>
     <link name="land_gear_${gear_num}">
-      <!--visual>
+      <visual>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
           <box size="0.01 0.01 0.0001"/>
         </geometry>
-      </visual-->
+      </visual>
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
@@ -270,6 +292,383 @@
         </plugin>
       </sensor>
     </gazebo>
+ 
   </xacro:macro>
 
+  <!--Spawns left manipulator-->
+  <xacro:macro name="manipulator_left"
+  params="link_length link_mass parent *origin *inertia">
+    
+    <!--link name="link1">
+        <visual>
+            <xacro:insert_block name="origin"/>
+            <geometry>
+                <box size="0.05 0.05 ${link_length}"/>
+            </geometry>
+        </visual>
+        
+        <collision>
+            <xacro:insert_block name="origin"/>
+            <geometry>
+                <box size="0.05 0.05 ${link_length}"/>
+            </geometry>
+        </collision>
+    </link>
+    
+    <link name="link2">
+        <visual>
+            <origin xyz="0 0 -0.25" rpy="-1.57 0 0"/>
+            <geometry>
+                <box size="0.05 0.05 ${link_length}"/>
+            </geometry>
+        </visual>
+        
+        <collision>
+            <origin xyz="0 0 -0.25" rpy="-1.57 0 0"/>
+            <geometry>
+                <box size="0.05 0.05 ${link_length}"/>
+            </geometry>
+        </collision>
+    </link>
+    
+    <joint name="joint_base_link1" type="revolute">
+        <limit upper="3.14" lower="-3.14" effort="0" velocity="0" />
+        <parent link="${parent}"/>
+        <child link="link1"/>
+    </joint>
+    
+    <joint name="joint_link1_link2" type="revolute">
+        <axis xyz="0 1 0"/>
+        <limit upper="3.14" lower="-3.14" effort="0" velocity="0" />
+        <parent link="link1"/>
+        <child link="link2"/>
+        <origin xyz="0 0 -0.25" rpy="-1.57 0 0"/>
+    </joint-->
+    
+    <link name='link1'>
+      <pose frame=''>0 -0.633387 0.200265 0 -0 0</pose>
+      <inertial>
+        <mass value="1" />
+        <xacro:insert_block name="inertia"/>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+      </inertial>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <visual>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+           <box size="0.05 0.05 ${link_length}"/>
+        </geometry>
+        <material name="material3">
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+          <shader type='vertex'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+        <cast_shadows>1</cast_shadows>
+        <transparency>0</transparency>
+      </visual>
+      <collision name='collision'>
+        <laser_retro>0</laser_retro>
+        <max_contacts>10</max_contacts>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+           <box size="0.05 0.05 ${link_length}"/>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1</mu>
+              <mu2>1</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
+            </ode>
+            <torsional>
+              <coefficient>1</coefficient>
+              <patch_radius>0</patch_radius>
+              <surface_radius>0</surface_radius>
+              <use_patch_radius>1</use_patch_radius>
+              <ode>
+                <slip>0</slip>
+              </ode>
+            </torsional>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e+06</threshold>
+          </bounce>
+          <contact>
+            <collide_without_contact>0</collide_without_contact>
+            <collide_without_contact_bitmask>1</collide_without_contact_bitmask>
+            <collide_bitmask>1</collide_bitmask>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+13</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+            <bullet>
+              <split_impulse>1</split_impulse>
+              <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+13</kp>
+              <kd>1</kd>
+            </bullet>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+    <link name='link2'>
+      <pose frame=''>0 -0.183347 -0.100133 1.57159 0.001593 3.14159</pose>
+      <inertial>
+        <mass value="1" />
+        <xacro:insert_block name="inertia"/>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+      </inertial>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <gravity>1</gravity>
+      <visual>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+           <box size="0.05 0.05 ${link_length}"/>
+        </geometry>
+        <material name="material2">
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+          <shader type='vertex'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+        <cast_shadows>1</cast_shadows>
+        <transparency>0</transparency>
+      </visual>
+      <collision name='collision'>
+        <laser_retro>0</laser_retro>
+        <max_contacts>10</max_contacts>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+           <box size="0.05 0.05 ${link_length}"/>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1</mu>
+              <mu2>1</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
+            </ode>
+            <torsional>
+              <coefficient>1</coefficient>
+              <patch_radius>0</patch_radius>
+              <surface_radius>0</surface_radius>
+              <use_patch_radius>1</use_patch_radius>
+              <ode>
+                <slip>0</slip>
+              </ode>
+            </torsional>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e+06</threshold>
+          </bounce>
+          <contact>
+            <collide_without_contact>0</collide_without_contact>
+            <collide_without_contact_bitmask>1</collide_without_contact_bitmask>
+            <collide_bitmask>1</collide_bitmask>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+13</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+            <bullet>
+              <split_impulse>1</split_impulse>
+              <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+13</kp>
+              <kd>1</kd>
+            </bullet>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+    <link name='link3'>
+      <pose frame=''>0 0.816733 -0.100133 1.57159 0.001593 3.14159</pose>
+      <inertial>
+        <mass value="1"/>
+        <xacro:insert_block name="inertia"/>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+      </inertial>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <gravity>1</gravity>
+      <visual>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+           <box size="0.05 0.05 ${link_length}"/>
+        </geometry>
+        <material name="material1">
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+          <shader type='vertex'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+        <cast_shadows>1</cast_shadows>
+        <transparency>0</transparency>
+      </visual>
+      <collision name='collision'>
+        <laser_retro>0</laser_retro>
+        <max_contacts>10</max_contacts>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+           <box size="0.05 0.05 ${link_length}"/>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1</mu>
+              <mu2>1</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
+            </ode>
+            <torsional>
+              <coefficient>1</coefficient>
+              <patch_radius>0</patch_radius>
+              <surface_radius>0</surface_radius>
+              <use_patch_radius>1</use_patch_radius>
+              <ode>
+                <slip>0</slip>
+              </ode>
+            </torsional>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e+06</threshold>
+          </bounce>
+          <contact>
+            <collide_without_contact>0</collide_without_contact>
+            <collide_without_contact_bitmask>1</collide_without_contact_bitmask>
+            <collide_bitmask>1</collide_bitmask>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+13</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+            <bullet>
+              <split_impulse>1</split_impulse>
+              <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+13</kp>
+              <kd>1</kd>
+            </bullet>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+    
+    <joint name="joint_base_link1" type="fixed">
+        <xacro:insert_block name="origin"/>
+        <parent link="${parent}"/>
+        <child link="link1"/>
+    </joint>
+    
+    <joint name='joint_link1_link2' type='revolute'>
+      <parent link="link1" />
+      <child link="link2" />
+      <pose frame=''>0 0 -0.5 0 -0 0</pose>
+      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="-1" velocity="-1" />
+      <axis>
+        <xyz>0 1 0</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name="joint_link2_link3" type="revolute">
+      <parent link="link2" />
+      <child link="link3" />
+      <pose frame=''>0 0 -0.5 0 -0 0</pose>
+      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="-1" velocity="-1" />
+      <axis>
+        <xyz>0 1 0</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+    
+  </xacro:macro>
+    
 </robot>
