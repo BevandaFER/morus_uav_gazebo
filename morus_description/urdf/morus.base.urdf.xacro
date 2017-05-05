@@ -39,6 +39,7 @@
   <!-- Manipulator properties-->
   <xacro:property name="link_length" value="0.5" />
   <xacro:property name="link_mass" value="1" />
+  <xacro:property name="link_width" value="0.05" />
   
   <!-- Property Blocks -->
   <xacro:property name="body_inertia">
@@ -205,8 +206,10 @@
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
 
+  <!-- Adding left manipulator -->
   <xacro:manipulator
     link_length="${link_length}"
+    link_width="${link_width}"
     link_mass="${link_mass}"
     parent="base_link"
     suffix="left">
@@ -214,8 +217,10 @@
     <xacro:insert_block name="link_inertia"/>
   </xacro:manipulator>
   
+  <!-- Adding right manipulator -->
   <xacro:manipulator
     link_length="${link_length}"
+    link_width="${link_width}"
     link_mass="${link_mass}"
     parent="base_link"
     suffix="right">
