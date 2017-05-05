@@ -205,12 +205,22 @@
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
 
-  <!--xacro:manipulator_left
+  <xacro:manipulator
     link_length="${link_length}"
     link_mass="${link_mass}"
-    parent="base_link">
-    <origin xyz="${-(arm_length)} 0 0" rpy="0 0 0" />
+    parent="base_link"
+    suffix="left">
+    <origin xyz="${-(arm_length)} 0 ${-(link_length/2)}" rpy="0 0 0" />
     <xacro:insert_block name="link_inertia"/>
-  </xacro:manipulator_left-->
+  </xacro:manipulator>
+  
+  <xacro:manipulator
+    link_length="${link_length}"
+    link_mass="${link_mass}"
+    parent="base_link"
+    suffix="right">
+    <origin xyz="${arm_length} 0 ${-(link_length/2)}" rpy="0 0 0" />
+    <xacro:insert_block name="link_inertia"/>
+  </xacro:manipulator>
   
 </robot>
