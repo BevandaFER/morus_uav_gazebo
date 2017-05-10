@@ -36,10 +36,9 @@
   </node>
   
 
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
+  <!--node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
     <remap from="robot_description" to="/$(arg name)/robot_description" />
     <remap from="joint_states" to="/$(arg name)/joint_states" />
-  </node>
-
+  </node-->
 
 </launch>

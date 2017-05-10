@@ -9,6 +9,8 @@
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>/morus</robotNamespace>
+       <!-- Added robot description -->
+       <robotParam>/morus/robot_description </robotParam>
        <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
     </plugin>
   </gazebo>

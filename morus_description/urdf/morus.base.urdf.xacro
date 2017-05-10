@@ -228,4 +228,25 @@
     <xacro:insert_block name="link_inertia"/>
   </xacro:manipulator>
   
+  <!-- Add transmission for joints --> 
+  <xacro:transmisija 
+    trans_number="0" 
+    joint_name="joint_baseToFixed_left">
+  </xacro:transmisija>    
+
+  <xacro:transmisija 
+    trans_number="1"
+    joint_name="joint_middleToEnd_left">
+  </xacro:transmisija>
+
+  <xacro:transmisija 
+    trans_number="2" 
+    joint_name="joint_baseToFixed_right">
+  </xacro:transmisija>
+
+  <xacro:transmisija 
+    trans_number="3"
+    joint_name="joint_middleToEnd_right">
+  </xacro:transmisija>
+  
 </robot>

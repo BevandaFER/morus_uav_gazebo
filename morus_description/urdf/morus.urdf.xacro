@@ -24,9 +24,9 @@
   <xacro:property name="rotor_drag_coefficient" value="8.06428e-04" />
   <xacro:property name="rolling_moment_coefficient" value="0.00001" />
   
-  <!--xacro:property name="movable_mass_mass" value="1" />
+  <xacro:property name="movable_mass_mass" value="1" />
   <xacro:property name="movable_mass_dimension" value="0.08" />
-  <xacro:property name="movable_mass_offset" value="0.025" /-->
+  <xacro:property name="movable_mass_offset" value="0.025" />
 
   <xacro:property name="imu_mass" value="0.02"/>
   <xacro:property name="imu_size" value="0.01"/>
@@ -68,6 +68,19 @@
     ixy="0.0" ixz="0.0"  iyz="0.0" /> <!-- [kg*m^2] [kg*m^2] [kg*m^2] [kg*m^2] [kg*m^2] [kg*m^2] -->
   </xacro:property>
 
+  <!-- Manipulator properties-->
+  <xacro:property name="link_length" value="0.5" />
+  <xacro:property name="link_mass" value="1" />
+  <xacro:property name="link_width" value="0.05" />
+
+  <xacro:property name="link_inertia">
+    <inertia
+    ixx="${(link_length * link_mass)/12}"
+    iyy="${(link_length * link_mass)/12}"
+    izz="${(link_length * link_mass)/12}"
+    ixy="0.0" ixz="0.0" iyz="0.0" />
+  </xacro:property>
+  
   <!-- Included URDF Files -->
   <xacro:include filename="$(find morus_description)/urdf/multirotor_base.urdf.xacro" />
 
@@ -161,7 +174,7 @@
 
 
   <!-- Instantiate movable mass 0-->
-  <xacro:movable_mass 
+  <!--xacro:movable_mass 
     mass_number="0" 
     parent="base_link"
     mass="${movable_mass_mass}"
@@ -173,10 +186,10 @@
     orientation="${PI}">
     <origin xyz="${(arm_length/2+arm_offset)} 0.0 ${movable_mass_offset}" rpy="0 0 0" />
     <xacro:insert_block name="movable_mass_inertia"/>
-  </xacro:movable_mass>
+  </xacro:movable_mass-->
 
   <!-- Instantiate movable mass 1 -->
-  <xacro:movable_mass 
+  <!--xacro:movable_mass 
     mass_number="1" 
     parent="base_link"
     mass="${movable_mass_mass}"
@@ -188,11 +201,11 @@
     orientation="${PI/2}">
     <origin xyz="0.0 ${(arm_length/2+arm_offset)} ${movable_mass_offset}" rpy="0 0 0" />
     <xacro:insert_block name="movable_mass_inertia"/>
-  </xacro:movable_mass>
+  </xacro:movable_mass-->
 
 
   <!-- Instantiate movable mass 2-->
-  <xacro:movable_mass 
+  <!--xacro:movable_mass 
     mass_number="2" 
     parent="base_link"
     mass="${movable_mass_mass}"
@@ -204,11 +217,11 @@
     orientation="${PI}">>
     <origin xyz="${-(arm_length/2+arm_offset)} 0.0 ${movable_mass_offset}" rpy="0 0 0" />
     <xacro:insert_block name="movable_mass_inertia"/>
-  </xacro:movable_mass>
+  </xacro:movable_mass-->
 
 
   <!-- Instantiate movable mass 3 -->
-  <xacro:movable_mass 
+  <!--xacro:movable_mass 
     mass_number="3" 
     parent="base_link"
     mass="${movable_mass_mass}"
@@ -220,10 +233,10 @@
     orientation="${PI/2}">>
     <origin xyz="0.0 ${-(arm_length/2+arm_offset)} ${movable_mass_offset}" rpy="0 0 0" />
     <xacro:insert_block name="movable_mass_inertia"/>
-  </xacro:movable_mass>
+  </xacro:movable_mass-->
 
 
-  <xacro:transmisija
+  <!--xacro:transmisija
     trans_number="0"
     joint_name="stick_to_movable_mass_0">
   </xacro:transmisija>
@@ -241,7 +254,7 @@
   <xacro:transmisija
     trans_number="3"
     joint_name="stick_to_movable_mass_3">
-  </xacro:transmisija>
+  </xacro:transmisija-->
 
   <xacro:property name="land_gear_inertia">
     <inertia
@@ -273,5 +286,25 @@
       <xacro:insert_block name="land_gear_inertia"/>
   </xacro:landing_gear>
 
-
+   <!-- Adding left manipulator -->
+  <xacro:manipulator
+    link_length="${link_length}"
+    link_width="${link_width}"
+    link_mass="${link_mass}"
+    parent="base_link"
+    suffix="left">
+    <origin xyz="${-(arm_length)} 0 ${-(link_length/2)}" rpy="0 0 0" />
+    <xacro:insert_block name="link_inertia"/>
+  </xacro:manipulator>
+  
+  <!-- Adding right manipulator -->
+  <xacro:manipulator
+    link_length="${link_length}"
+    link_width="${link_width}"
+    link_mass="${link_mass}"
+    parent="base_link"
+    suffix="right">
+    <origin xyz="${arm_length} 0 ${-(link_length/2)}" rpy="0 0 0" />
+    <xacro:insert_block name="link_inertia"/>
+  </xacro:manipulator>
 </robot>

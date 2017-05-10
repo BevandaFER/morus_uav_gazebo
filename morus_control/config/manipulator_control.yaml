@@ -1,0 +1,23 @@
+morus:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  # Position Controllers ---------------------------------------
+  joint0_left_controller:
+    type: effort_controllers/JointPositionController
+    joint: joint_fixedToMiddle_left
+    pid: {p: 80.0, i: 100.0, d: 8.0, i_clamp_max: 100.0, i_clamp_min: -100.0}
+  joint1_left_controller:
+    type: effort_controllers/JointPositionController
+    joint: joint_middleToEnd_left
+    pid: {p: 80.0, i: 100.0, d: 8.0, i_clamp_max: 100.0, i_clamp_min: -100.0}
+  joint0_right_controller:
+    type: effort_controllers/JointPositionController
+    joint: joint_fixedToMiddle_right
+    pid: {p: 80.0, i: 100.0, d: 8.0, i_clamp_max: 100.0, i_clamp_min: -100.0}
+  joint1_right_controller:
+    type: effort_controllers/JointPositionController
+    joint: joint_middleToEnd_right
+    pid: {p: 80.0, i: 100.0, d: 8.0, i_clamp_max: 100.0, i_clamp_min: -100.0}

@@ -4,8 +4,7 @@
   <arg name="attitude_ctrl_flag" default="true"/>
   
   <!-- Load joint controller configurations from YAML file to parameter server -->
-  <!--rosparam file="$(find morus_control)/config/morus_control.yaml" command="load"/-->
-  <rosparam file="$(find morus_control)/config/morus_control.yaml" command="load"/>
+  <rosparam file="$(find morus_control)/config/manipulator_control.yaml" command="load"/>
 
   <node pkg="morus_control" type="mav_state_pub.py" name="mav_state_pub" output="screen"  ns="$(arg namespace)">
   	<remap from="imu" to="ahrs" />
@@ -20,21 +19,12 @@
   <group if="$(arg attitude_ctrl_flag)">
   <!-- If attitude_ctrl_flag is true run attitude mass controller -->
     <!-- load the controllers -->
-    <!--node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-      output="screen" ns="$(arg namespace)"  args="joint_state_controller
-		  movable_mass_0_position_controller
-		  movable_mass_1_position_controller 
-		  movable_mass_2_position_controller 
-		  movable_mass_3_position_controller">
-    <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
-    </node-->
-    
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
       output="screen" ns="$(arg namespace)"  args="joint_state_controller
-      joint0_left_controller
-      joint1_left_controller 
-      joint0_right_controller
-      joint1_right_controller">
+		  joint0_left_controller
+		  joint1_left_controller 
+		  joint0_right_controller
+		  joint1_right_controller">
     <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
     </node>
     
