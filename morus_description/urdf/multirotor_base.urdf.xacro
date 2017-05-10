@@ -291,14 +291,14 @@
   <!--Spawns manipulator:
   Manipulator is modeled as a 2DOF manipulator where first link is 
   fixed to the base. Other two links are conecteted with 
-  revolute joints -->
+  revolute joints. 
   
-  <!--macro arguments - 
-  - link length
-  - link mass
-  - parent of the first (fixed) link
-  - origin block determining position of the first link
-  - intertial block definining link inertia
+  @link_length Length of link.
+  @link_width Width of link.
+  @link_mass Link mass.
+  @parent Parent link of the first (fixed) link.
+  @origin Origin block determining position of the first link (its center)..
+  @intertia Intertial block definining inertia for each link.
   -->
   <xacro:macro name="manipulator"
   params="link_length link_width link_mass parent suffix *origin *inertia">
@@ -307,15 +307,15 @@
     <!--LINK1-->
     <!--_____________________________________________________________-->
     <link name='link_fixed_${suffix}'>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
       
       <inertial>
         <mass value="1" />
         <xacro:insert_block name="inertia"/>
-        <pose xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
       </inertial>
             
       <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
            <box size="${link_width} ${link_width} ${link_length/2}"/>
         </geometry>
@@ -341,7 +341,7 @@
       <inertial>
         <mass value="1" />
         <xacro:insert_block name="inertia"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin rpy="0 0 0" xyz="0 ${-link_length/2 + link_width/2} 0"/>
       </inertial>
       
       <visual>
@@ -371,7 +371,7 @@
       <inertial>
         <mass value="1"/>
         <xacro:insert_block name="inertia"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 ${-link_length/2} 0" rpy="0 0 0"/>
       </inertial>
       
       <visual>
@@ -412,31 +412,7 @@
       <child link="link_middle_${suffix}" />
       <origin xyz="0 0 ${-(link_length/4 + link_width/2)}" rpy="0 0 0"/>
       <limit upper="1.79769e+308" lower="-1.79769e+308" effort="-1" velocity="-1"/>
-     
-      <axis>
-        <xyz>0 0 1</xyz>
-        <use_parent_model_frame>0</use_parent_model_frame>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>   
-      
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </suspension>
-        </ode>
-      </physics>
-      
+      <axis xyz="0 0 1" />
     </joint>
     
     <!--_____________________________________________________________-->
@@ -446,33 +422,9 @@
     <joint name="joint_middleToEnd_${suffix}" type="revolute">
       <parent link="link_middle_${suffix}" />
       <child link="link_end_${suffix}" />
-      <origin xyz="0 ${-link_length} 0" rpy="0 0 0"/>
+      <origin xyz="0 ${-link_length + link_width/2} 0" rpy="0 0 0"/>
       <limit upper="1.79769e+308" lower="-1.79769e+308" effort="-1" velocity="-1" />
-      
-      <axis>
-        <xyz>0 0 1</xyz>
-        <use_parent_model_frame>0</use_parent_model_frame>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
-      
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </suspension>
-        </ode>
-      </physics>
-      
+      <axis xyz="0 0 1" />
     </joint>
     
   </xacro:macro>
