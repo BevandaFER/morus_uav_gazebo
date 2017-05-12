@@ -6,7 +6,7 @@
   <arg name="x" default="0.0"/>
   <arg name="y" default="0.0"/>
   <arg name="z" default="0.74"/>
-  <arg name="enable_logging" default="false"/>
+  <arg name="enable_logging" default="true"/>
   <arg name="enable_ground_truth" default="true"/>
   <arg name="log_file" default="morus_log"/>
   <arg name="exclude_floor_link_from_collision_check" default="ground_plane::link"/>

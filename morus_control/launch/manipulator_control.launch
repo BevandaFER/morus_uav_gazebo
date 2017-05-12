@@ -25,7 +25,7 @@
 		  joint1_left_controller 
 		  joint0_right_controller
 		  joint1_right_controller">
-    <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
+      <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
     </node>
     
     <!-- convert joint states to TF transforms for rviz, etc -->

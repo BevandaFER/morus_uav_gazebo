@@ -399,7 +399,7 @@
       <parent link="link_fixed_${suffix}" />
       <child link="link_middle_${suffix}" />
       <origin xyz="0 0 ${-(link_length/4 + link_width/2)}" rpy="0 0 0"/>
-      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="-1" velocity="-1"/>
+      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="20" velocity="2"/>
       <axis xyz="0 0 1" />
     </joint>
     
@@ -411,7 +411,7 @@
       <parent link="link_middle_${suffix}" />
       <child link="link_end_${suffix}" />
       <origin xyz="0 ${-link_length + link_width/2} 0" rpy="0 0 0"/>
-      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="-1" velocity="-1" />
+      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="20" velocity="2" />
       <axis xyz="0 0 1" />
     </joint>
     
