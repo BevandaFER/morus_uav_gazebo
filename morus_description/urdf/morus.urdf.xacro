@@ -285,7 +285,7 @@
       <origin xyz="0 0.325 -0.6" rpy="0 0 0" />
       <xacro:insert_block name="land_gear_inertia"/>
   </xacro:landing_gear>
-
+ 
    <!-- Adding left manipulator -->
   <xacro:manipulator
     link_length="${link_length}"
@@ -307,4 +307,26 @@
     <origin xyz="${arm_length} 0 ${-(link_length/2)}" rpy="0 0 0" />
     <xacro:insert_block name="link_inertia"/>
   </xacro:manipulator>
+  
+  <!-- Add transmission for joints --> 
+  <xacro:transmisija 
+    trans_number="0" 
+    joint_name="joint_fixedToMiddle_left">
+  </xacro:transmisija>    
+
+  <xacro:transmisija 
+    trans_number="1"
+    joint_name="joint_middleToEnd_left">
+  </xacro:transmisija>
+
+  <xacro:transmisija 
+    trans_number="2" 
+    joint_name="joint_fixedToMiddle_right">
+  </xacro:transmisija>
+
+  <xacro:transmisija 
+    trans_number="3"
+    joint_name="joint_middleToEnd_right">
+  </xacro:transmisija>
+   
 </robot>

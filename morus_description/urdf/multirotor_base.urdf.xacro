@@ -1,19 +1,7 @@
 <?xml version="1.0"?>
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- Main multirotor link -->
-  <xacro:property name="link_inertia">
-    <inertia
-    ixx="${(link_length * link_mass)/12}"
-    iyy="${(link_length * link_mass)/12}"
-    izz="${(link_length * link_mass)/12}"
-    ixy="0.0" ixz="0.0" iyz="0.0" />
-  </xacro:property>
-  
-  <xacro:property name="PI" value="3.14" />
-  <xacro:property name="link_length" value="0.5" />
-  <xacro:property name="link_mass" value="1" />
-  
+   
   <xacro:macro name="multirotor_base_macro"
     params="robot_namespace mass body_width body_height mesh_file mesh_file_mass *inertia">
     

@@ -105,10 +105,18 @@ class AttitudeControl:
         rospy.Subscriber('euler_ref', Vector3, self.euler_ref_cb)
         rospy.Subscriber('/clock', Clock, self.clock_cb)
 
-        self.pub_mass0 = rospy.Publisher('movable_mass_0_position_controller/command', Float64, queue_size=1)
-        self.pub_mass1 = rospy.Publisher('movable_mass_1_position_controller/command', Float64, queue_size=1)
-        self.pub_mass2 = rospy.Publisher('movable_mass_2_position_controller/command', Float64, queue_size=1)
-        self.pub_mass3 = rospy.Publisher('movable_mass_3_position_controller/command', Float64, queue_size=1)
+        # Joint publishers
+        self.pub_joint0_left = rospy.Publisher('joint0_left_controller/command', Float64, queue_size = 1)
+        self.pub_joint1_left = rospy.Publisher('joint1_left_controller/command', Float64, queue_size = 1)
+        self.pub_joint0_right = rospy.Publisher('joint0_right_controller/command', Float64, queue_size = 1)
+        self.pub_joint1_right = rospy.Publisher('joint1_right_controller/command', Float64, queue_size = 1)
+        
+        # Joint subscribers
+        rospy.Subscriber('joint0_left_controller/command', Float64, self.joint0_left_cb)
+        rospy.Subscriber('joint1_left_controller/command', Float64, self.joint1_left_cb)
+        rospy.Subscriber('joint0_right_controller/command', Float64, self.joint0_right_cb)
+        rospy.Subscriber('joint1_right_controller/command', Float64, self.joint1_right_cb)
+
         self.pub_pid_roll = rospy.Publisher('/pid_roll', PIDController, queue_size=1)
         self.pub_pid_roll_rate = rospy.Publisher('pid_roll_rate', PIDController, queue_size=1)
         self.pub_pid_pitch = rospy.Publisher('pid_pitch', PIDController, queue_size=1)
@@ -128,7 +136,7 @@ class AttitudeControl:
         print 'Received first clock message'
 
         while not self.start_flag:
-            print "Waiting for the first measurement."
+            print "Waiting for the first measurement. (1)"
             rospy.sleep(0.5)
         print "Starting attitude control."
 
@@ -165,19 +173,53 @@ class AttitudeControl:
 	      # pitch rate pid compute
 	      dx_pitch = self.pid_pitch_rate.compute(pitch_rate_sv, self.euler_rate_mv.y, dt_clk)
 
-	      # Publish mass position
-	      mass0_command_msg = Float64()
-	      mass0_command_msg.data = dx_pitch
-	      mass2_command_msg = Float64()
-	      mass2_command_msg.data = -dx_pitch
-	      mass1_command_msg = Float64()
-	      mass1_command_msg.data = -dy_roll
-	      mass3_command_msg = Float64()
-	      mass3_command_msg.data = dy_roll
-	      self.pub_mass0.publish(mass0_command_msg)
-	      self.pub_mass1.publish(mass1_command_msg)
-	      self.pub_mass2.publish(mass2_command_msg)
-	      self.pub_mass3.publish(mass3_command_msg)
+	      # Calculating angles - inverse Jacobian ------------------------------------------------------------------
+	      # Link length 
+	      # TODO pass link length value to this function
+	      l = 1
+
+	      # Current joint values (left)
+	      q1L = self.joint0_left_pos.data
+	      q2L = self.joint1_left_pos.data
+
+	      print 'Joint0_left value ', q1L
+	      print 'Joint1_left value ', q2L
+
+	      # New angle increments (left)
+	      dq1L = math.cos(q1L + q2L) / (l * math.sin(q2L)) * dx_pitch \
+	             + math.sin(q1L + q2L) / (l * math.sin(q2L)) * dy_roll
+	      dq2L = - (math.cos(q1L + q2L) + math.cos(q1L)) / (l * math.sin(q2L)) * dx_pitch \
+	             - (math.sin(q1L + q2L) + math.sin(q2L)) / (l * math.sin(q2L)) * dy_roll
+
+	      # Current joint values (right)
+	      q1R = joint0_right_pos.data
+	      q2R = joint1_right_pos.data
+
+	      # New angle increments (right)
+	      dq1R = - math.cos(q1L + q2L) / (l * math.sin(q2L)) * dx_pitch \
+	             - math.sin(q1L + q2L) / (l * math.sin(q2L)) * dy_roll
+	      dq2R = (math.cos(q1L + q2L) + math.cos(q1L)) / (l * math.sin(q2L)) * dx_pitch \
+	             + (math.sin(q1L + q2L) + math.sin(q2L)) / (l * math.sin(q2L)) * dy_roll
+
+	      # Make all new messages
+	      joint0_left_command_msg = Float64()
+	      joint0_left_command_msg.data = dq1L
+
+	      joint1_left_command_msg = Float64()
+	      joint1_left_command_msg.data = dq2L
+
+	      joint0_right_command_msg = Float64()
+	      joint0_right_command_msg.data = dq1R
+
+	      joint1_right_command_msg = Float64()
+	      joint1_right_command_msg.data = dq2R
+
+
+	      # Publish all new messages
+	      self.pub_joint0_left.publish(joint0_left_command_msg)
+	      self.pub_joint1_left.publish(joint1_left_command_msg)
+	      self.pub_joint0_right.publish(joint0_right_command_msg)
+	      self.pub_joint1_right.publish(joint1_right_command_msg)
 
 	      # Publish PID data - could be usefule for tuning
 	      self.pub_pid_roll.publish(self.pid_roll.create_msg())
@@ -203,6 +245,7 @@ class AttitudeControl:
         if not self.start_flag:
             self.start_flag = True
 
+        print 'hello from ahrs_cb'
         qx = msg.orientation.x
         qy = msg.orientation.y
         qz = msg.orientation.z
@@ -215,7 +258,7 @@ class AttitudeControl:
 
         # gyro measurements (p,q,r)
         p = msg.angular_velocity.x
-        q = msg.angular_velocity.yaw
+        q = msg.angular_velocity.y
         r = msg.angular_velocity.z
 
         sx = math.sin(self.euler_mv.x)   # sin(roll)
@@ -238,6 +281,23 @@ class AttitudeControl:
     def clock_cb(self, msg):
         self.clock = msg
 
+    # Callback function for joint0_left
+    def joint0_left_cb(self, msg):
+        self.joint0_left_pos = msg
+        print 'hello from joint cb'
+
+    # Callback function for joint1_left
+    def joint1_left_cb(self, msg):
+        self.joint1_left_pos = msg
+        
+    # Callback function for joint0_right
+    def joint0_right_cb(self, msg):
+        self.joint0_right_pos = msg
+        
+    # Callback function for joint1_right
+    def joint1_right_cb(self, msg):
+        self.joint1_right_pos = msg
+        
     def cfg_callback(self, config, level):
         """ Callback for dynamically reconfigurable parameters (P,I,D gains for each controller)
         """

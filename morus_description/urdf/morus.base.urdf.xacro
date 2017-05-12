@@ -231,7 +231,7 @@
   <!-- Add transmission for joints --> 
   <xacro:transmisija 
     trans_number="0" 
-    joint_name="joint_baseToFixed_left">
+    joint_name="joint_fixedToMiddle_left">
   </xacro:transmisija>    
 
   <xacro:transmisija 
@@ -241,7 +241,7 @@
 
   <xacro:transmisija 
     trans_number="2" 
-    joint_name="joint_baseToFixed_right">
+    joint_name="joint_fixedToMiddle_right">
   </xacro:transmisija>
 
   <xacro:transmisija 
