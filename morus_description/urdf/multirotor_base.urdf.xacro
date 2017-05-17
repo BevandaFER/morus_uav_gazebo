@@ -286,7 +286,7 @@
   @link_mass Link mass.
   @parent Parent link of the first (fixed) link.
   @origin Origin block determining position of the first link (its center)..
-  @intertia Intertial block definining inertia for each link.
+  @intertia Inertial block definining inertia for each link.
   -->
   <xacro:macro name="manipulator"
   params="link_length link_width link_mass parent suffix *origin *inertia">
@@ -297,9 +297,14 @@
     <link name='link_fixed_${suffix}'>
       
       <inertial>
-        <mass value="1" />
-        <xacro:insert_block name="inertia"/>
+        <mass value="${link_mass/2}" />
         <origin xyz="0 0 0" rpy="0 0 0"/>
+
+        <inertia
+          ixx="${(link_length/2 * link_length/2 * link_mass/2)/12}"
+          iyy="${(link_length/2 * link_mass/2)/12}"
+          izz="${(link_length/2 * link_mass/2)/12}"
+          ixy="0.0" ixz="0.0" iyz="0.0" />
       </inertial>
             
       <visual>
@@ -327,20 +332,21 @@
     <link name='link_middle_${suffix}'>
       
       <inertial>
-        <mass value="1" />
+        <mass value="${link_mass}" />
+        <origin rpy="0 0 0" xyz="${link_length/2 - link_width/2} 0 0"/>
+        <!--origin rpy="0 0 0" xyz="0 0 0"/-->
         <xacro:insert_block name="inertia"/>
-        <origin rpy="0 0 0" xyz="0 ${-link_length/2 + link_width/2} 0"/>
       </inertial>
       
       <visual>
-        <origin rpy="0 0 0" xyz="0 ${-link_length/2 + link_width/2} 0"/>
+        <origin rpy="0 0 0" xyz="${link_length/2 - link_width/2} 0 0"/>
         <geometry>
-           <box size="${link_width} ${link_length} ${link_width}"/>
+           <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
      </visual>
      
       <collision name='collision'>
-        <origin rpy="0 0 0" xyz="0 ${-link_length/2 + link_width/2} 0"/>
+        <origin rpy="0 0 0" xyz="${link_length/2 - link_width/2} 0 0"/>
         <geometry>
            <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
@@ -357,24 +363,25 @@
     <link name='link_end_${suffix}'>
       
       <inertial>
-        <mass value="1"/>
+        <mass value="${link_mass}"/>
         <xacro:insert_block name="inertia"/>
-        <origin xyz="0 ${-link_length/2} 0" rpy="0 0 0"/>
+        <origin xyz="${link_length/2} 0 0" rpy="0 0 0"/>
+        <!--origin xyz="0 0 0" rpy="0 0 0"/-->
       </inertial>
       
       <visual>
-        <origin xyz="0 ${-link_length/2} 0" rpy="0 0 0"/>
+        <origin xyz="${link_length/2} 0 0" rpy="0 0 0"/>
         <geometry>
-           <box size="${link_width} ${link_length} ${link_width}"/>
+           <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
       </visual>
       
-      <collision name='collision'>
-        <origin xyz="0 ${-link_length/2} 0" rpy="0 0 0"/>
+      <!--collision name='collision'>
+        <origin xyz="${link_length/2} 0 0" rpy="0 0 0"/>
         <geometry>
-           <box size="${link_width} ${link_length} ${link_width}"/>
+           <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
-      </collision>
+      </collision-->
     </link>
     
     <gazebo reference="link_end_${suffix}">
@@ -399,7 +406,7 @@
       <parent link="link_fixed_${suffix}" />
       <child link="link_middle_${suffix}" />
       <origin xyz="0 0 ${-(link_length/4 + link_width/2)}" rpy="0 0 0"/>
-      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="20" velocity="2"/>
+      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="10" velocity="1"/>
       <axis xyz="0 0 1" />
     </joint>
     
@@ -410,11 +417,57 @@
     <joint name="joint_middleToEnd_${suffix}" type="revolute">
       <parent link="link_middle_${suffix}" />
       <child link="link_end_${suffix}" />
-      <origin xyz="0 ${-link_length + link_width/2} 0" rpy="0 0 0"/>
-      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="20" velocity="2" />
+      <origin xyz="${link_length - link_width/2} 0 0" rpy="0 0 0"/>
+      <limit upper="1.79769e+308" lower="-1.79769e+308" effort="10" velocity="1" />
       <axis xyz="0 0 1" />
     </joint>
     
   </xacro:macro>
     
+
+  <!-- Spawns a mass at the end of one specified manipulator.
+    Payload block is modelled as a cylinder.
+
+  @parent Reference to parent link - the link on which the payload is connected.
+  @link_length Length of the parent link.
+  @payload_mass Mass of the payload
+  @payload_length Length of the payload
+  @payload_radius Radius of the payload
+  @inertia Inertia of the payload.
+  -->
+  <xacro:macro name="payload" 
+    params="parent link_length payload_mass payload_length payload_radius *inertia">
+    
+    <link name="payload">
+     <inertial>
+        <mass value="${payload_mass}" />
+        <!--origin rpy="0 0 0" xyz="0 ${-payload_length/2 + link_width/2} 0"/-->
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <xacro:insert_block name="inertia"/>
+      </inertial>
+      
+      <visual>
+        <!--origin rpy="0 0 0" xyz="0 ${-link_length/2 + link_width/2} 0"/-->
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+           <cylinder length="${payload_length}" radius="${payload_radius}"/>
+        </geometry>
+     </visual>
+     
+      <collision name='collision'>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <!--origin rpy="0 0 0" xyz="0 ${-link_length/2 + link_width/2} 0"/-->
+        <geometry>
+           <cylinder length="${payload_length}" radius="${payload_radius}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="joint_endToPayload" type="fixed">
+        <parent link="${parent}"/>
+        <child link="payload"/>
+        <origin rpy="0 0 0" xyz="${link_length} 0 0"/>
+    </joint>
+  </xacro:macro>
+
 </robot>

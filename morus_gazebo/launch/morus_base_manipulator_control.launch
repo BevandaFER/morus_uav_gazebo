@@ -13,8 +13,10 @@
   <arg name="enable_ground_truth" default="true"/>
   <arg name="log_file" default="morus"/>
 
-  <!-- Ovo mozda ne treba (?) -->
   <arg name="joy_config" default="attack3"/>
+
+  <!--Initial position enable -->
+  <arg name="initial_position" default="false" />
 
   <!-- Launch gazebo -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -29,7 +31,9 @@
   <include file="$(find morus_gazebo)/launch/spawn_morus_multirotor.launch" />
   
    <!-- Start control -->
-  <include file="$(find morus_control)/launch/manipulator_control.launch"/>
+  <include file="$(find morus_control)/launch/manipulator_control.launch">
+    <arg name="initial_position" value="$(arg initial_position)"/>
+  </include>
 
   <!--Here starts joystick -->
   <!--include file="$(find morus_joy)/launch/morus_joy_teleop.launch">

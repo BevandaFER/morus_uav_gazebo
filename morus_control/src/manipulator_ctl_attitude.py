@@ -213,28 +213,7 @@ class AttitudeControl:
                         self.euler_rate_mv.y, dt_clk)
 
                 # Calculating angles - inverse Jacobian ------------------------------------------------------------------
-                # Link length
-                # TODO Proslijediti l kao argument funkciji
-                # TODO Sto sa zero division
-                #       - zero division - uvrstiti u direktni jakobijan i riješiti analitički
-                # 
-                # TODO Dovesti robot u pocetno stanje (u centar)
-                # TODO Promijeniti parametre regulatora da daju bolji odziv
-                # State -> process_value trenutna vrijednost kuteva
-                # 
-                # PRIJE TUNIRANJA REGULATORA - dodati masu na kraj (2kg)
-                #                            - smanjiti mase članaka (0.1kg)
-                #                            - dovesti u početno stanje članke
-                # Tuniranje parametra PID-a  - ugasiti kontroler (manipulator_ctl_attitude.py)
-
-                #                            - upaliti - rosrun rqt_graph rqt_graph i pretplatiti se na parametra 
-                #                            - state/process_value trenutna vrijednost kuta, state/set_point referenca
-                #                            - otprilike vremenska konstatna 150ms, tamo gdje siječe referencu -> 5T
-                #                            - online mijenjanje vrijednosti regulatora rosrun rqt_reconfigure rqt_reconfigure
-                #                            - instalirati neki python graph (???)
-
-                # Nakon tuniranja dodati motore (?)
-                
+               
                 l = 1
 
                 #print 'q1L ', self.q1L
