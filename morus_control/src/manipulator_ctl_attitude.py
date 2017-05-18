@@ -16,6 +16,8 @@ import math
 from datetime import datetime
 from rosgraph_msgs.msg import Clock
 
+from control_msgs.msg import JointControllerState
+
 
 class AttitudeControl:
 
@@ -67,26 +69,26 @@ class AttitudeControl:
         # #################################################################
         # Add your PID params here
 
-        self.pid_roll.set_kp(3.0)
-        self.pid_roll.set_ki(1.0)
+        self.pid_roll.set_kp(0.05)
+        self.pid_roll.set_ki(0.0)
         self.pid_roll.set_kd(0)
 
-        self.pid_roll_rate.set_kp(2.5)
+        self.pid_roll_rate.set_kp(0.25)
         self.pid_roll_rate.set_ki(0.0)
         self.pid_roll_rate.set_kd(0)
-        self.pid_roll_rate.set_lim_high(0.3)
-        self.pid_roll_rate.set_lim_low(-0.3)
+        self.pid_roll_rate.set_lim_high(0.001)
+        self.pid_roll_rate.set_lim_low(-0.001)
 
-        self.pid_pitch.set_kp(3.0)
-        self.pid_pitch.set_ki(1.0)
+        self.pid_pitch.set_kp(0.05)
+        self.pid_pitch.set_ki(0)
         self.pid_pitch.set_kd(0)
 
-        self.pid_pitch_rate.set_kp(2.5)
+        self.pid_pitch_rate.set_kp(0.25)
         self.pid_pitch_rate.set_ki(0.0)
         self.pid_pitch_rate.set_kd(0)
-        self.pid_pitch_rate.set_lim_high(0.3)
-        self.pid_pitch_rate.set_lim_low(-0.3)
-
+        self.pid_pitch_rate.set_lim_high(0.001)
+        self.pid_pitch_rate.set_lim_low(-0.001)
+        
         self.pid_yaw.set_kp(0)
         self.pid_yaw.set_ki(0)
         self.pid_yaw.set_kd(0)
@@ -109,7 +111,6 @@ class AttitudeControl:
         rospy.Subscriber('/clock', Clock, self.clock_cb)
 
         # Joint publishers
-
         self.pub_joint0_left = \
             rospy.Publisher('joint0_left_controller/command', Float64,
                             queue_size=1)
@@ -123,15 +124,6 @@ class AttitudeControl:
             rospy.Publisher('joint1_right_controller/command', Float64,
                             queue_size=1)
 
-        # Joint subscribers
-        rospy.Subscriber('joint0_left_controller/command', Float64,
-                         self.joint0_left_cb)
-        rospy.Subscriber('joint1_left_controller/command', Float64,
-                         self.joint1_left_cb)
-        rospy.Subscriber('joint0_right_controller/command', Float64,
-                         self.joint0_right_cb)
-        rospy.Subscriber('joint1_right_controller/command', Float64,
-                         self.joint1_right_cb)
 
         self.pub_pid_roll = rospy.Publisher('/pid_roll', PIDController,
                 queue_size=1)
@@ -148,10 +140,7 @@ class AttitudeControl:
         self.cfg_server = Server(MavAttitudeCtlParamsConfig,
                                  self.cfg_callback)
 
-        self.q1L = 0
-        self.q2L = 0.1
-        self.q1R = 0
-        self.q2R = 0
+
     def run(self):
         '''
         Runs ROS node - computes PID algorithms for cascade attitude control.
@@ -177,9 +166,9 @@ class AttitudeControl:
 
         while not rospy.is_shutdown():
 
-            # self.ros_rate.sleep()
+            #self.ros_rate.sleep()
 
-            rospy.sleep(0.01)
+            rospy.sleep(0.1)
             if not self.start_flag:
                 print 'Waiting for the first IMU measurement.'
                 rospy.sleep(0.5)
@@ -199,10 +188,13 @@ class AttitudeControl:
                 roll_rate_sv = self.pid_roll.compute(self.euler_sp.x,
                         self.euler_mv.x, dt_clk)
 
+                print "x_sp ", self.euler_sp.x, " x_mv ", self.euler_mv.x 
                 # roll rate pid compute
 
                 dy_roll = self.pid_roll_rate.compute(roll_rate_sv,
                         self.euler_rate_mv.x, dt_clk)
+
+                print "y_sp ", self.euler_sp.y, " y_mv ", self.euler_mv.y 
 
                 pitch_rate_sv = self.pid_pitch.compute(self.euler_sp.y,
                         self.euler_mv.y, dt_clk)
@@ -212,52 +204,60 @@ class AttitudeControl:
                 dx_pitch = self.pid_pitch_rate.compute(pitch_rate_sv,
                         self.euler_rate_mv.y, dt_clk)
 
-                # Calculating angles - inverse Jacobian ------------------------------------------------------------------
-               
-                l = 1
+                # Calculating angles - inverse Jacobian --------------------------------------------------------------
+                l = 0.5
 
-                #print 'q1L ', self.q1L
-                #print 'q2L ', self.q2L
-                #print 'q1R ', self.q1R
-                #print 'q2R ', self.q2R
-                
-                #print 'dy_roll ', dy_roll
-                #print 'dx_pitch ', dx_pitch
+                #saturation = 0.01
+
+                #if dx_pitch > saturation:
+                #    dx_pitch = saturation
+                #if dx_pitch < -saturation:
+                #    dx_pitch = -saturation
+
+                #if dy_roll > saturation:
+                #    dy_roll = saturation
+                #if dy_roll < -saturation:
+                #    dy_roll = -saturation
+
+                q1L = 1.0298
+                q2L = -2.0596
 
                 # New angle increments (left)
                 try:
-                    dq1L = math.cos(self.q1L + self.q2L) / (l * math.sin(self.q2L)) * dx_pitch + \
-                            math.sin(self.q1L + self.q2L) / (l * math.sin(self.q2L)) * dy_roll
-                    dq2L = -(math.cos(self.q1L + self.q2L) + math.cos(self.q1L)) / (l * math.sin(self.q2L)) * dx_pitch \
-                           - (math.sin(self.q1L + self.q2L) + math.sin(self.q2L)) / (l * math.sin(self.q2L)) * dy_roll
+                    dq1L = ( math.cos(q1L + q2L) / (l * math.sin(q2L)) ) * (-dx_pitch) + \
+                           ( math.sin(q1L + q2L) / (l * math.sin(q2L)) ) * (-dy_roll)
+                    dq2L = -( math.cos(q1L + q2L) + math.cos(q1L) ) / (l * math.sin(q2L)) * (-dx_pitch) \
+                           - ( math.sin(q1L + q2L) + math.sin(q2L) ) / (l * math.sin(q2L)) * (-dy_roll)
                 except ZeroDivisionError:
                     print "ZeroDivisionError"
-                    dq1L = 0.05
-                    dq2L = 0.05
+                    # TODO Handle zero division
+
+                q1R = 1.0298
+                q2R = -2.0596
 
                 # New angle increments (right)
                 try:
-                    dq1R = -math.cos(self.q1L + self.q2L) / (l * math.sin(self.q2L)) * dx_pitch \
-                       - math.sin(self.q1L + self.q2L) / (l * math.sin(self.q2L)) * dy_roll
-                    dq2R = (math.cos(self.q1L + self.q2L) + math.cos(self.q1L)) / (l * math.sin(self.q2L)) * dx_pitch \
-                       + (math.sin(self.q1L + self.q2L) + math.sin(self.q2L)) / (l * math.sin(self.q2L)) * dy_roll
+                    dq1R = math.cos(q1R + q2R) / (l * math.sin(q2R)) * (dx_pitch) \
+                       + math.sin(q1R + q2R) / (l * math.sin(q2R)) * (dy_roll)
+                    dq2R = - (math.cos(q1R + q2R) + math.cos(q1R)) / (l * math.sin(q2R)) * (dx_pitch) \
+                       - (math.sin(q1R + q2R) + math.sin(q2R)) / (l * math.sin(q2R)) * (dy_roll)
                 except ZeroDivisionError:
                     print "ZeroDivisionError"
-                    dq1R = 0.05
-                    dq2R = 0.05
+                    # TODO Handle zero division
                 
+
                 # Make all new messagees
                 joint0_left_command_msg = Float64()
-                joint0_left_command_msg.data = dq1L
+                joint0_left_command_msg.data = q1L + dq1L
 
                 joint1_left_command_msg = Float64()
-                joint1_left_command_msg.data = dq2L
+                joint1_left_command_msg.data = q2L + dq2L
 
                 joint0_right_command_msg = Float64()
-                joint0_right_command_msg.data = dq1R
+                joint0_right_command_msg.data = q1R + dq1R
 
                 joint1_right_command_msg = Float64()
-                joint1_right_command_msg.data = dq2R
+                joint1_right_command_msg.data = q2R + dq2R
 
                 # Publish all new messages
 
@@ -267,7 +267,6 @@ class AttitudeControl:
                 self.pub_joint1_right.publish(joint1_right_command_msg)
 
                 # Publish PID data - could be usefule for tuning
-
                 self.pub_pid_roll.publish(self.pid_roll.create_msg())
                 self.pub_pid_roll_rate.publish(self.pid_roll_rate.create_msg())
                 self.pub_pid_pitch.publish(self.pid_pitch.create_msg())
@@ -275,17 +274,10 @@ class AttitudeControl:
                 self.pub_pid_yaw.publish(self.pid_yaw.create_msg())
                 self.pub_pid_yaw_rate.publish(self.pid_yaw_rate.create_msg())
 
-                try:
-                    # Current joint values (left)
-                    self.q1L = self.joint0_left_pos.data
-                    self.q2L = self.joint1_left_pos.data
-
-                    # Current joint values (right)
-                    self.q1R = joint0_right_pos.data
-                    self.q2R = joint1_right_pos.data
-                except NameError:
-                    print 'No joint changes'
-
+                #print ""
+                print "dx = ", dx_pitch, " dy = ", dy_roll
+                #print 'dq1L = ', dq1L, ' dq2L = ', dq2L
+                #print 'dq1R = ', dq1R, ' dq2R = ', dq2R
 
     def mot_vel_ref_cb(self, msg):
         '''
@@ -305,7 +297,6 @@ class AttitudeControl:
         if not self.start_flag:
             self.start_flag = True
 
-        print 'hello from ahrs_cb'
         qx = msg.orientation.x
         qy = msg.orientation.y
         qz = msg.orientation.z
@@ -346,27 +337,7 @@ class AttitudeControl:
 
     def clock_cb(self, msg):
         self.clock = msg
-
-    # Callback function for joint0_left
-
-    def joint0_left_cb(self, msg):
-        self.joint0_left_pos = msg
-        print 'hello from joint cb'
-
-    # Callback function for joint1_left
-
-    def joint1_left_cb(self, msg):
-        self.joint1_left_pos = msg
-
-    # Callback function for joint0_right
-
-    def joint0_right_cb(self, msg):
-        self.joint0_right_pos = msg
-
-    # Callback function for joint1_right
-
-    def joint1_right_cb(self, msg):
-        self.joint1_right_pos = msg
+        
 
     def cfg_callback(self, config, level):
         """ Callback for dynamically reconfigurable parameters (P,I,D gains for each controller)
@@ -438,6 +409,7 @@ class AttitudeControl:
 if __name__ == '__main__':
 
     rospy.init_node('mav_attitude_ctl')
+    rospy.sleep(10)
     attitude_ctl = AttitudeControl()
     attitude_ctl.run()
 

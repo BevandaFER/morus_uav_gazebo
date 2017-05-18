@@ -66,7 +66,7 @@
   </gazebo>
 
   <!-- Start publishing GM status msgs-->
-    <!--gazebo>
+  <gazebo>
     <plugin filename="libmorus_gazebo_gm_status.so" name="gm_status_1">
       <gmID> 1 </gmID>
       <linkName>rotor_0</linkName>
@@ -74,6 +74,7 @@
       <motorConstant>0.000456874</motorConstant>
     </plugin>
   </gazebo>
+
   <gazebo>
     <plugin filename="libmorus_gazebo_gm_status.so" name="gm_status_22">
       <gmID> 2 </gmID>
@@ -82,6 +83,7 @@
       <motorConstant>0.000456874</motorConstant>
     </plugin>
   </gazebo>
+
   <gazebo>
     <plugin filename="libmorus_gazebo_gm_status.so" name="gm_status_13">
       <gmID> 3 </gmID>
@@ -90,6 +92,7 @@
       <motorConstant>0.000456874</motorConstant>
     </plugin>
   </gazebo>
+  
   <gazebo>
     <plugin filename="libmorus_gazebo_gm_status.so" name="gm_status_14">
       <gmID> 4 </gmID>
@@ -97,7 +100,7 @@
       <jointName>rotor_3_joint</jointName>
       <motorConstant>0.000456874</motorConstant>
     </plugin>
-  </gazebo-->
+  </gazebo>
   
   <!-- Mount first generic pose sensor-->
   <xacro:odometry_plugin_macro

@@ -109,7 +109,7 @@
       <xacro:insert_block name="origin" />
       <axis xyz="0 0 1" />
       <!-- TODO(ff): not currently set because it's not yet supported -->
-      <!-- <limit effort="2000" velocity="${max_rot_velocity}" /> -->
+      <limit effort="2000" velocity="${max_rot_velocity}"/> 
       <parent link="${parent}" />
       <child link="rotor_${motor_number}" />
 
@@ -118,26 +118,33 @@
     <!-- <gazebo reference="rotor_${motor_number}_joint"> <axis> <xyz>0 0 1</xyz> 
       <limit> <velocity> ${max_rot_velocity} </velocity> </limit> </axis> </gazebo> -->
     <link name="rotor_${motor_number}">
+      
       <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <mass value="${mass_rotor}" /> <!-- [kg] -->
         <xacro:insert_block name="inertia" />
       </inertial>
+      
       <visual>
-        <!-- origin xyz="10 10 10" rpy="0 0 0" /-->
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <xacro:insert_block name="origin" />
         <geometry>
-          <cylinder length="0.005" radius="${radius_rotor}"/> <!-- [m] -->
-          <!--mesh filename="package://morus_description/meshes/propeller_${direction}.dae"
-            scale="0.0025 0.0025 0.0025" /-->
+          <!--cylinder length="0.005" radius="${radius_rotor}"/--> <!-- [m] -->
+          <mesh filename="package://morus_description/meshes/propeller_${direction}.dae"
+            scale="0.0025 0.0025 0.0025" />
           <!--box size="${2*radius_rotor} 4 0.005"/-->
         </geometry>
       </visual>
+      
       <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <cylinder length="0.005" radius="${radius_rotor}" /> <!-- [m] -->
         </geometry>
       </collision>
+    
     </link>
+    
     <gazebo>
       <plugin name="${suffix}_motor_model" filename="librotors_gazebo_motor_model.so">
         <jointName>rotor_${motor_number}_joint</jointName>
@@ -333,20 +340,20 @@
       
       <inertial>
         <mass value="${link_mass}" />
-        <origin rpy="0 0 0" xyz="${link_length/2 - link_width/2} 0 0"/>
+        <origin rpy="0 0 0" xyz="${link_length/2} 0 0"/>
         <!--origin rpy="0 0 0" xyz="0 0 0"/-->
         <xacro:insert_block name="inertia"/>
       </inertial>
       
       <visual>
-        <origin rpy="0 0 0" xyz="${link_length/2 - link_width/2} 0 0"/>
+        <origin rpy="0 0 0" xyz="${link_length/2} 0 0"/>
         <geometry>
            <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
      </visual>
      
       <collision name='collision'>
-        <origin rpy="0 0 0" xyz="${link_length/2 - link_width/2} 0 0"/>
+        <origin rpy="0 0 0" xyz="${link_length/2} 0 0"/>
         <geometry>
            <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
@@ -376,12 +383,13 @@
         </geometry>
       </visual>
       
-      <!--collision name='collision'>
+      <collision name='collision'>
         <origin xyz="${link_length/2} 0 0" rpy="0 0 0"/>
         <geometry>
            <box size="${link_length} ${link_width} ${link_width}"/>
         </geometry>
-      </collision-->
+      </collision>
+
     </link>
     
     <gazebo reference="link_end_${suffix}">
@@ -417,7 +425,7 @@
     <joint name="joint_middleToEnd_${suffix}" type="revolute">
       <parent link="link_middle_${suffix}" />
       <child link="link_end_${suffix}" />
-      <origin xyz="${link_length - link_width/2} 0 0" rpy="0 0 0"/>
+      <origin xyz="${link_length} 0 0" rpy="0 0 0"/>
       <limit upper="1.79769e+308" lower="-1.79769e+308" effort="10" velocity="1" />
       <axis xyz="0 0 1" />
     </joint>
@@ -436,9 +444,9 @@
   @inertia Inertia of the payload.
   -->
   <xacro:macro name="payload" 
-    params="parent link_length payload_mass payload_length payload_radius *inertia">
+    params="parent link_length payload_mass payload_length payload_radius suffix *inertia">
     
-    <link name="payload">
+    <link name="payload_${suffix}">
      <inertial>
         <mass value="${payload_mass}" />
         <!--origin rpy="0 0 0" xyz="0 ${-payload_length/2 + link_width/2} 0"/-->
@@ -463,9 +471,9 @@
       </collision>
     </link>
 
-    <joint name="joint_endToPayload" type="fixed">
+    <joint name="joint_endToPayload_${suffix}" type="fixed">
         <parent link="${parent}"/>
-        <child link="payload"/>
+        <child link="payload_${suffix}"/>
         <origin rpy="0 0 0" xyz="${link_length} 0 0"/>
     </joint>
   </xacro:macro>

@@ -12,7 +12,7 @@
   <xacro:property name="mass_rotor" value="0.2" /> <!-- [kg] -->
   <xacro:property name="arm_length" value="0.515" /> <!-- [m] -->
   <xacro:property name="arm_offset" value="0.1" /> <!-- [m] -->
-  <xacro:property name="propeler_offset" value="0.325" /> <!-- [m] -->
+  <xacro:property name="propeler_offset" value="0.5" /> <!--0.325 [m] -->
   
   <xacro:property name="rotor_offset_top" value="0.037" /> <!-- [m] -->
   <xacro:property name="radius_rotor" value="0.33" /> <!-- [m] -->
@@ -84,15 +84,15 @@
   
   <!-- Payload properties-->
   <xacro:property name="payload_mass" value="2" />
-  <xacro:property name="payload_length" value="0.1" />
-  <xacro:property name="payload_radius" value="0.05" />
+  <xacro:property name="payload_length" value="0.2" />
+  <xacro:property name="payload_radius" value="0.08" />
 
   <!-- Payload modelled as a solid cylinder -->
   <xacro:property name="payload_inertia">
     <inertia
-    ixx="${( (3 * payload_radius * payload_radius + payload_length * payload_length) * link_mass) / 12}"
-    iyy="${( (3 * payload_radius * payload_radius + payload_length * payload_length) * link_mass) / 12}"
-    izz="${ (payload_radius * payload_radius * link_mass) / 2}"
+    ixx="${( (3 * payload_radius * payload_radius + payload_length * payload_length) * link_mass/2 ) / 12}"
+    iyy="${( (3 * payload_radius * payload_radius + payload_length * payload_length) * link_mass/2 ) / 12}"
+    izz="${ (payload_radius * payload_radius * link_mass/2 ) / 2}"
     ixy="0.0" ixz="0.0" iyz="0.0" />
   </xacro:property>
 
@@ -103,7 +103,7 @@
   <xacro:property name="q2_right" value="2.0596"/>
 
   <!-- Include features -->
-  <xacro:property name="enable_rotors" value="false" />
+  <xacro:property name="enable_rotors" value="true" />
   <xacro:property name="enable_mass" value="false" />
 
   <!-- Included URDF Files -->
@@ -120,8 +120,7 @@
     <xacro:insert_block name="body_inertia" />
   </xacro:multirotor_base_macro>
 
-  <group if="${enable_rotors}">
-
+ 
     <!-- Instantiate rotors -->
     <xacro:vertical_rotor
       robot_namespace="$(arg name)"
@@ -138,7 +137,7 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Red">
-      <origin xyz="${arm_length+arm_offset} 0 ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="${arm_length+arm_offset + 0.1} 0 ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
@@ -157,7 +156,7 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Blue">
-      <origin xyz="0 ${arm_length+arm_offset} ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="0 ${arm_length+arm_offset + 0.1} ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
@@ -175,8 +174,8 @@
       motor_number="2"
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
-      color="Blue">
-      <origin xyz="${-(arm_length+arm_offset)} 0 ${propeler_offset}" rpy="0 0 0" />
+      color="Red">
+      <origin xyz="${-(arm_length+arm_offset + 0.1)} 0 ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
@@ -195,12 +194,11 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Blue">
-      <origin xyz="0 ${-(arm_length+arm_offset)} ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="0 ${-(arm_length+arm_offset + 0.1)} ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
-  </group>
-
+  
 
   <group if="${enable_mass}">
 
@@ -365,10 +363,21 @@
   <xacro:payload
     parent="link_end_left"
     link_length="${link_length}"
-    payload_mass="${payload_mass}"
+    payload_mass="${payload_mass/2}"
     payload_length="${payload_length}"
-    payload_radius="${payload_radius}">
+    payload_radius="${payload_radius}"
+    suffix="left">
     <xacro:insert_block name="payload_inertia"/>
   </xacro:payload>
 
+  <xacro:payload
+    parent="link_end_right"
+    link_length="${link_length}"
+    payload_mass="${payload_mass/2}"
+    payload_length="${payload_length}"
+    payload_radius="${payload_radius}"
+    suffix="right">
+    <xacro:insert_block name="payload_inertia"/>
+  </xacro:payload>
+  
 </robot>
