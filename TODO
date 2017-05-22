@@ -18,3 +18,15 @@
 
 # Nakon tuniranja dodati motore (?)
 
+
+- resetiranje simulacije: 
+
+    upaliti gazebo
+    spawnati morus
+    pokrenuti control
+    ...
+    delete morus
+    ubiti kontrol nodove
+    spawnati morus ponovo
+    ponovo launchati control
+    ???

@@ -96,6 +96,14 @@
     ixy="0.0" ixz="0.0" iyz="0.0" />
   </xacro:property>
 
+  <xacro:property name="payload_inertia_1">
+     <inertia 
+     ixx="${(payload_mass/2 * payload_length * payload_length)/6}" 
+     iyy="${(payload_mass/2 * payload_length * payload_length)/6}" 
+     izz="${(payload_mass/2 * payload_length * payload_length)/6}"
+     ixy="0.0" ixz="0.0"  iyz="0.0" /> <!-- [kg*m^2] [kg*m^2] [kg*m^2] [kg*m^2] [kg*m^2] [kg*m^2] -->
+  </xacro:property>
+
   <!--define initial conditions -->
   <xacro:property name="q1_left" value="1.0298"/>
   <xacro:property name="q2_left" value="-2.0596"/>

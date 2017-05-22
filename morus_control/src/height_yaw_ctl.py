@@ -131,7 +131,12 @@ class HeightControl:
 
         rospy.sleep(15)
         while not rospy.is_shutdown():
-            self.ros_rate.sleep()
+            
+            try:
+                self.ros_rate.sleep()
+            except Exception:
+                pass
+       
 
             # #######################################################
             # #######################################################
@@ -152,8 +157,10 @@ class HeightControl:
 
                 rospy.sleep(0.5)
             else:
+
                 t = rospy.Time.now()
                 dt = (t - self.t_old).to_sec()
+
 
                 # t = datetime.now()
                 # dt = (t - self.t_old).total_seconds()
@@ -195,7 +202,7 @@ class HeightControl:
                     mot_speed3 = self.mot_speed + self.dwz
                     mot_speed4 = self.mot_speed - self.dwz
 
-                    print 'pushlishing motor speed: ', mot_speed1, mot_speed2, mot_speed3, mot_speed4
+                    #print 'pushlishing motor speed: ', mot_speed1, mot_speed2, mot_speed3, mot_speed4
 
                     mot_speed_msg.angular_velocities = [mot_speed1,
                             mot_speed2, mot_speed3, mot_speed4]

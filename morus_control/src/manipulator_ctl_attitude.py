@@ -69,26 +69,27 @@ class AttitudeControl:
         # #################################################################
         # Add your PID params here
 
-        self.pid_roll.set_kp(0.05)
+        # Matknuti integrator 
+        self.pid_roll.set_kp(3.0)
         self.pid_roll.set_ki(0.0)
         self.pid_roll.set_kd(0)
 
-        self.pid_roll_rate.set_kp(0.25)
+        self.pid_roll_rate.set_kp(2.5)
         self.pid_roll_rate.set_ki(0.0)
         self.pid_roll_rate.set_kd(0)
-        self.pid_roll_rate.set_lim_high(0.001)
-        self.pid_roll_rate.set_lim_low(-0.001)
+        self.pid_roll_rate.set_lim_high(0.3)
+        self.pid_roll_rate.set_lim_low(-0.3)
 
-        self.pid_pitch.set_kp(0.05)
-        self.pid_pitch.set_ki(0)
+        self.pid_pitch.set_kp(3.0)
+        self.pid_pitch.set_ki(0.0)
         self.pid_pitch.set_kd(0)
 
-        self.pid_pitch_rate.set_kp(0.25)
+        self.pid_pitch_rate.set_kp(2.5)
         self.pid_pitch_rate.set_ki(0.0)
         self.pid_pitch_rate.set_kd(0)
-        self.pid_pitch_rate.set_lim_high(0.001)
-        self.pid_pitch_rate.set_lim_low(-0.001)
-        
+        self.pid_pitch_rate.set_lim_high(0.3)
+        self.pid_pitch_rate.set_lim_low(-0.3)
+
         self.pid_yaw.set_kp(0)
         self.pid_yaw.set_ki(0)
         self.pid_yaw.set_kd(0)
@@ -125,6 +126,11 @@ class AttitudeControl:
                             queue_size=1)
 
 
+        self.sub_joint0_left = rospy.Subscriber('joint0_left_controller/state', JointControllerState, self.joint0_left_cb)
+        self.sub_joint1_left = rospy.Subscriber('joint1_left_controller/state', JointControllerState, self.joint1_left_cb)
+        self.sub_joint0_right = rospy.Subscriber('joint0_right_controller/state', JointControllerState, self.joint0_right_cb)
+        self.sub_joint1_right = rospy.Subscriber('joint1_right_controller/state', JointControllerState, self.joint1_right_cb)
+
         self.pub_pid_roll = rospy.Publisher('/pid_roll', PIDController,
                 queue_size=1)
         self.pub_pid_roll_rate = rospy.Publisher('pid_roll_rate',
@@ -140,6 +146,39 @@ class AttitudeControl:
         self.cfg_server = Server(MavAttitudeCtlParamsConfig,
                                  self.cfg_callback)
 
+        # Length of a single manipulator arm
+        self.l = 0.5
+
+        # Initial offset from the origin of the manipulator arm to the initial position
+        self.x_offset = 0.515
+        self.y_offset = 0
+
+    def initial_position(self):
+        print 'Setting initial position'
+
+        rospy.sleep(5)
+
+        q1_initial = 1.0298
+        q2_initial = -2.0596
+
+        initial_joint0_left_msg = Float64()
+        initial_joint0_left_msg.data = q1_initial
+
+        initial_joint1_left_msg = Float64()
+        initial_joint1_left_msg.data = q2_initial
+        
+        initial_joint0_right_msg = Float64()
+        initial_joint0_right_msg.data = q1_initial
+
+        initial_joint1_right_msg = Float64()
+        initial_joint1_right_msg.data = q2_initial
+
+        self.pub_joint0_left.publish(initial_joint0_left_msg)
+        self.pub_joint1_left.publish(initial_joint1_left_msg)
+        self.pub_joint0_right.publish(initial_joint0_right_msg)
+        self.pub_joint1_right.publish(initial_joint1_right_msg)
+
+        rospy.sleep(5)
 
     def run(self):
         '''
@@ -168,7 +207,12 @@ class AttitudeControl:
 
             #self.ros_rate.sleep()
 
-            rospy.sleep(0.1)
+            try:
+                rospy.sleep(0.1)
+            except Exception:
+                self.t_old = 0
+                
+            
             if not self.start_flag:
                 print 'Waiting for the first IMU measurement.'
                 rospy.sleep(0.5)
@@ -186,15 +230,15 @@ class AttitudeControl:
                     print self.count, ' - ', dt_clk
 
                 roll_rate_sv = self.pid_roll.compute(self.euler_sp.x,
-                        self.euler_mv.x, dt_clk)
+                        self.euler_mv.x*0, dt_clk)
 
-                print "x_sp ", self.euler_sp.x, " x_mv ", self.euler_mv.x 
+                print "x_sp ", self.euler_sp.x
                 # roll rate pid compute
 
                 dy_roll = self.pid_roll_rate.compute(roll_rate_sv,
                         self.euler_rate_mv.x, dt_clk)
 
-                print "y_sp ", self.euler_sp.y, " y_mv ", self.euler_mv.y 
+                print "y_sp ", self.euler_sp.y
 
                 pitch_rate_sv = self.pid_pitch.compute(self.euler_sp.y,
                         self.euler_mv.y, dt_clk)
@@ -204,67 +248,30 @@ class AttitudeControl:
                 dx_pitch = self.pid_pitch_rate.compute(pitch_rate_sv,
                         self.euler_rate_mv.y, dt_clk)
 
-                # Calculating angles - inverse Jacobian --------------------------------------------------------------
-                l = 0.5
+                # Calculating angles - inverse Jacobian 
 
-                #saturation = 0.01
-
-                #if dx_pitch > saturation:
-                #    dx_pitch = saturation
-                #if dx_pitch < -saturation:
-                #    dx_pitch = -saturation
-
-                #if dy_roll > saturation:
-                #    dy_roll = saturation
-                #if dy_roll < -saturation:
-                #    dy_roll = -saturation
-
-                q1L = 1.0298
-                q2L = -2.0596
-
-                # New angle increments (left)
-                try:
-                    dq1L = ( math.cos(q1L + q2L) / (l * math.sin(q2L)) ) * (-dx_pitch) + \
-                           ( math.sin(q1L + q2L) / (l * math.sin(q2L)) ) * (-dy_roll)
-                    dq2L = -( math.cos(q1L + q2L) + math.cos(q1L) ) / (l * math.sin(q2L)) * (-dx_pitch) \
-                           - ( math.sin(q1L + q2L) + math.sin(q2L) ) / (l * math.sin(q2L)) * (-dy_roll)
-                except ZeroDivisionError:
-                    print "ZeroDivisionError"
-                    # TODO Handle zero division
-
-                q1R = 1.0298
-                q2R = -2.0596
-
-                # New angle increments (right)
-                try:
-                    dq1R = math.cos(q1R + q2R) / (l * math.sin(q2R)) * (dx_pitch) \
-                       + math.sin(q1R + q2R) / (l * math.sin(q2R)) * (dy_roll)
-                    dq2R = - (math.cos(q1R + q2R) + math.cos(q1R)) / (l * math.sin(q2R)) * (dx_pitch) \
-                       - (math.sin(q1R + q2R) + math.sin(q2R)) / (l * math.sin(q2R)) * (dy_roll)
-                except ZeroDivisionError:
-                    print "ZeroDivisionError"
-                    # TODO Handle zero division
-                
-
-                # Make all new messagees
-                joint0_left_command_msg = Float64()
-                joint0_left_command_msg.data = q1L + dq1L
-
-                joint1_left_command_msg = Float64()
-                joint1_left_command_msg.data = q2L + dq2L
-
+                dqL = self.get_new_dqL(dx_pitch, dy_roll)
+                dqR = self.get_new_dqR(dx_pitch, dy_roll)
+       
+                # Calculate new joint values
                 joint0_right_command_msg = Float64()
-                joint0_right_command_msg.data = q1R + dq1R
+                joint0_right_command_msg.data = self.q1R + dqR[0]
 
                 joint1_right_command_msg = Float64()
-                joint1_right_command_msg.data = q2R + dq2R
+                joint1_right_command_msg.data = self.q2R + dqR[1]
 
-                # Publish all new messages
+                joint0_left_command_msg = Float64()
+                joint0_left_command_msg.data = self.q1L + dqL[0]
 
-                self.pub_joint0_left.publish(joint0_left_command_msg)
-                self.pub_joint1_left.publish(joint1_left_command_msg)
+                joint1_left_command_msg = Float64()
+                joint1_left_command_msg.data = self.q2L + dqL[1]
+
+
+                # Publish new joint values
                 self.pub_joint0_right.publish(joint0_right_command_msg)
                 self.pub_joint1_right.publish(joint1_right_command_msg)
+                self.pub_joint0_left.publish(joint0_left_command_msg)
+                self.pub_joint1_left.publish(joint1_left_command_msg)
 
                 # Publish PID data - could be usefule for tuning
                 self.pub_pid_roll.publish(self.pid_roll.create_msg())
@@ -274,10 +281,111 @@ class AttitudeControl:
                 self.pub_pid_yaw.publish(self.pid_yaw.create_msg())
                 self.pub_pid_yaw_rate.publish(self.pid_yaw_rate.create_msg())
 
-                #print ""
-                print "dx = ", dx_pitch, " dy = ", dy_roll
-                #print 'dq1L = ', dq1L, ' dq2L = ', dq2L
-                #print 'dq1R = ', dq1R, ' dq2R = ', dq2R
+    '''
+    Calculate new joint increments for right manipulator.
+
+    @return Tuple containing (dq1R, dq2R)
+    '''
+    def get_new_dqR(self, dx_pitch, dy_roll):
+        # Add initial offset - right manipulator
+        x_right_target = self.x_offset - dx_pitch
+        y_right_target = self.y_offset - dy_roll
+
+        # Get joint offsets of the right manipulator
+        q1R = self.q1R
+        q2R = self.q2R
+
+        print ''
+        print 'q1R: ', q1R, ' q2L: ', q2R
+
+        # Get current position of the right manipulator 
+        x_right_curr = self.l * (math.cos(q1R + q2R) + math.cos(q1R))
+        y_right_curr = self.l * (math.sin(q1R + q2R) + math.sin(q1R))
+
+        print 'x_right_target: ', x_right_target, ' y_right_target: ', y_right_target
+        print 'x_right_curr: ', x_right_curr, ' y_right_curr: ', y_right_curr
+        print 'dx: ', - dx_pitch, ' dy: ', - dy_roll
+
+        dx_right_pitch = x_right_target - x_right_curr
+        dy_right_roll = y_right_target - y_right_curr
+
+        dx_right_pitch = self.deadzone(dx_right_pitch, 0.05)
+        dy_right_roll = self.deadzone(dy_right_roll, 0.05)
+
+        print 'dx_new: ', dx_right_pitch, ' dy_new: ', dy_right_roll
+        
+        # New angle increments (right)
+        try:
+            dq1R =  math.cos(q1R + q2R) / (self.l * math.sin(q2R)) * (dx_right_pitch) \
+               + math.sin(q1R + q2R) / (self.l * math.sin(q2R)) * (dy_right_roll)
+            dq2R = - (math.cos(q1R + q2R) + math.cos(q1R)) / (self.l * math.sin(q2R)) * (dx_right_pitch) \
+               - (math.sin(q1R + q2R) + math.sin(q1R)) / (self.l * math.sin(q2R)) * (dy_right_roll)
+        except ZeroDivisionError:
+            print "ZeroDivisionError"
+            # TODO Handle zero division
+        
+        print 'dq1R: ', dq1R, ' dq2R: ', dq2R
+        print ''
+
+        return (dq1R, dq2R)
+
+    '''
+    Calculate new joint increments for the left manipulator.
+
+    @return Tuple containing (dq1L, dq2L)
+    '''
+    def get_new_dqL(self, dx_pitch, dy_roll):
+        # Add initial offset - left manipulator
+        x_left_target = self.x_offset + dx_pitch
+        y_left_target = self.y_offset + dy_roll
+
+        # Get joint offsets of the left manipulator
+        q1L = self.q1L
+        q2L = self.q2L
+
+        print ''
+        print 'q1L: ', q1L, ' q2L: ', q2L
+
+        # Get current (x,y) position of the left manipulator
+        x_left_curr = self.l * (math.cos(q1L + q2L) + math.cos(q1L))
+        y_left_curr = self.l * (math.sin(q1L + q2L) + math.sin(q1L))
+
+        print 'x_left_target: ', x_left_curr, ' y_left_target: ', y_left_target
+        print 'x_left_curr: ', x_left_curr, ' y_left_curr: ', y_left_curr
+        print 'dx: ', dx_pitch, ' dy: ', dy_roll
+
+        # Calculate distance to the target position
+        dx_left_pitch = x_left_target - x_left_curr
+        dy_left_roll = y_left_target - y_left_curr
+
+        dx_left_pitch = self.deadzone(dx_left_pitch, 0.05)
+        dy_left_roll = self.deadzone(dy_left_roll, 0.05)
+
+        print 'dx_new: ', dx_left_pitch, ' dy_new: ', dy_left_roll
+
+        # New angle increments (left)
+        try:
+            dq1L = ( math.cos(q1L + q2L) / (self.l * math.sin(q2L)) ) * (dx_left_pitch) + \
+                   ( math.sin(q1L + q2L) / (self.l * math.sin(q2L)) ) * (dy_left_roll)
+            dq2L = -( math.cos(q1L + q2L) + math.cos(q1L) ) / (self.l * math.sin(q2L)) * (dx_left_pitch) \
+                   - ( math.sin(q1L + q2L) + math.sin(q1L) ) / (self.l * math.sin(q2L)) * (dy_left_roll)
+        except ZeroDivisionError:
+            print "ZeroDivisionError"
+            # TODO Handle zero division
+
+        print 'dq1L: ', dq1L, ' dq2L: ', dq2L
+        print ''
+        
+        return (dq1L, dq2L)      
+
+    def deadzone(self, x, limit):
+        if x > limit:
+            return limit
+
+        if x < (- limit):
+            return -limit
+
+        return x
 
     def mot_vel_ref_cb(self, msg):
         '''
@@ -327,6 +435,7 @@ class AttitudeControl:
         self.euler_rate_mv.y = cx * q - sx * r
         self.euler_rate_mv.z = sx / cy * q + cx / cy * r
 
+
     def euler_ref_cb(self, msg):
         '''
         Euler ref values callback.
@@ -338,7 +447,18 @@ class AttitudeControl:
     def clock_cb(self, msg):
         self.clock = msg
         
+    def joint0_left_cb(self, msg):
+        self.q1L = msg.process_value
 
+    def joint1_left_cb(self, msg):
+        self.q2L = msg.process_value
+        
+    def joint0_right_cb(self, msg):
+        self.q1R = msg.process_value
+        
+    def joint1_right_cb(self, msg):
+        self.q2R = msg.process_value
+        
     def cfg_callback(self, config, level):
         """ Callback for dynamically reconfigurable parameters (P,I,D gains for each controller)
         """
@@ -409,8 +529,8 @@ class AttitudeControl:
 if __name__ == '__main__':
 
     rospy.init_node('mav_attitude_ctl')
-    rospy.sleep(10)
     attitude_ctl = AttitudeControl()
+    attitude_ctl.initial_position()
     attitude_ctl.run()
 
 
