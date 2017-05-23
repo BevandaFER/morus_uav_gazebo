@@ -72,23 +72,23 @@ class AttitudeControl:
         # Matknuti integrator 
         self.pid_roll.set_kp(3.0)
         self.pid_roll.set_ki(0.0)
-        self.pid_roll.set_kd(0)
+        self.pid_roll.set_kd(1)
 
         self.pid_roll_rate.set_kp(2.5)
         self.pid_roll_rate.set_ki(0.0)
-        self.pid_roll_rate.set_kd(0)
-        self.pid_roll_rate.set_lim_high(0.3)
-        self.pid_roll_rate.set_lim_low(-0.3)
+        self.pid_roll_rate.set_kd(1)
+        self.pid_roll_rate.set_lim_high(0.1)
+        self.pid_roll_rate.set_lim_low(-0.1)
 
         self.pid_pitch.set_kp(3.0)
         self.pid_pitch.set_ki(0.0)
-        self.pid_pitch.set_kd(0)
+        self.pid_pitch.set_kd(1)
 
         self.pid_pitch_rate.set_kp(2.5)
         self.pid_pitch_rate.set_ki(0.0)
-        self.pid_pitch_rate.set_kd(0)
-        self.pid_pitch_rate.set_lim_high(0.3)
-        self.pid_pitch_rate.set_lim_low(-0.3)
+        self.pid_pitch_rate.set_kd(1)
+        self.pid_pitch_rate.set_lim_high(0.1)
+        self.pid_pitch_rate.set_lim_low(-0.1)
 
         self.pid_yaw.set_kp(0)
         self.pid_yaw.set_ki(0)
@@ -216,6 +216,7 @@ class AttitudeControl:
             if not self.start_flag:
                 print 'Waiting for the first IMU measurement.'
                 rospy.sleep(0.5)
+
             else:
                 clock_now = self.clock
                 dt_clk = (clock_now.clock - clock_old.clock).to_sec()
@@ -230,15 +231,15 @@ class AttitudeControl:
                     print self.count, ' - ', dt_clk
 
                 roll_rate_sv = self.pid_roll.compute(self.euler_sp.x,
-                        self.euler_mv.x*0, dt_clk)
+                        self.euler_mv.x, dt_clk)
 
-                print "x_sp ", self.euler_sp.x
+                print "x_sp ", self.euler_sp.x, ' x_mv: ', self.euler_mv.x
                 # roll rate pid compute
 
                 dy_roll = self.pid_roll_rate.compute(roll_rate_sv,
                         self.euler_rate_mv.x, dt_clk)
 
-                print "y_sp ", self.euler_sp.y
+                print "y_sp ", self.euler_sp.y, ' y_mv: ', self.euler_mv.x
 
                 pitch_rate_sv = self.pid_pitch.compute(self.euler_sp.y,
                         self.euler_mv.y, dt_clk)
@@ -249,9 +250,8 @@ class AttitudeControl:
                         self.euler_rate_mv.y, dt_clk)
 
                 # Calculating angles - inverse Jacobian 
-
-                dqL = self.get_new_dqL(dx_pitch, dy_roll)
-                dqR = self.get_new_dqR(dx_pitch, dy_roll)
+                dqL = self.get_new_dqL(dx_pitch, -dy_roll, 0.03)
+                dqR = self.get_new_dqR(dx_pitch, -dy_roll, 0.03)
        
                 # Calculate new joint values
                 joint0_right_command_msg = Float64()
@@ -284,12 +284,18 @@ class AttitudeControl:
     '''
     Calculate new joint increments for right manipulator.
 
+    @param dx_pitch
+    @param dy_roll
+    @param limit Limit maximum pitch and roll values
     @return Tuple containing (dq1R, dq2R)
     '''
-    def get_new_dqR(self, dx_pitch, dy_roll):
+    def get_new_dqR(self, dx_pitch, dy_roll, limit):
         # Add initial offset - right manipulator
         x_right_target = self.x_offset - dx_pitch
         y_right_target = self.y_offset - dy_roll
+
+        #x_right_target = 2*self.x_offset - self.l * (math.cos(self.q1L + self.q2L) + math.cos(self.q1L))
+        #y_right_target = - self.l * (math.sin(self.q1L + self.q2L) + math.sin(self.q1L))
 
         # Get joint offsets of the right manipulator
         q1R = self.q1R
@@ -309,8 +315,9 @@ class AttitudeControl:
         dx_right_pitch = x_right_target - x_right_curr
         dy_right_roll = y_right_target - y_right_curr
 
-        dx_right_pitch = self.deadzone(dx_right_pitch, 0.05)
-        dy_right_roll = self.deadzone(dy_right_roll, 0.05)
+        # Limit dx / dy
+        dx_right_pitch = self.saturation(dx_right_pitch, limit)
+        dy_right_roll = self.saturation(dy_right_roll, limit)
 
         print 'dx_new: ', dx_right_pitch, ' dy_new: ', dy_right_roll
         
@@ -332,9 +339,11 @@ class AttitudeControl:
     '''
     Calculate new joint increments for the left manipulator.
 
+    @param dx_pitch 
+    @param dy_roll
     @return Tuple containing (dq1L, dq2L)
     '''
-    def get_new_dqL(self, dx_pitch, dy_roll):
+    def get_new_dqL(self, dx_pitch, dy_roll, limit):
         # Add initial offset - left manipulator
         x_left_target = self.x_offset + dx_pitch
         y_left_target = self.y_offset + dy_roll
@@ -358,8 +367,9 @@ class AttitudeControl:
         dx_left_pitch = x_left_target - x_left_curr
         dy_left_roll = y_left_target - y_left_curr
 
-        dx_left_pitch = self.deadzone(dx_left_pitch, 0.05)
-        dy_left_roll = self.deadzone(dy_left_roll, 0.05)
+        # Limit dx / dy
+        dx_left_pitch = self.saturation(dx_left_pitch, limit)
+        dy_left_roll = self.saturation(dy_left_roll, limit)
 
         print 'dx_new: ', dx_left_pitch, ' dy_new: ', dy_left_roll
 
@@ -378,7 +388,7 @@ class AttitudeControl:
         
         return (dq1L, dq2L)      
 
-    def deadzone(self, x, limit):
+    def saturation(self, x, limit):
         if x > limit:
             return limit
 
