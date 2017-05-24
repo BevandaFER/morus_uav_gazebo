@@ -70,23 +70,23 @@ class AttitudeControl:
         # Add your PID params here
 
         # Matknuti integrator 
-        self.pid_roll.set_kp(3.0)
+        self.pid_roll.set_kp(7.5)
         self.pid_roll.set_ki(0.0)
-        self.pid_roll.set_kd(1)
+        self.pid_roll.set_kd(5)
 
-        self.pid_roll_rate.set_kp(2.5)
+        self.pid_roll_rate.set_kp(5)
         self.pid_roll_rate.set_ki(0.0)
-        self.pid_roll_rate.set_kd(1)
+        self.pid_roll_rate.set_kd(2.5)
         self.pid_roll_rate.set_lim_high(0.1)
         self.pid_roll_rate.set_lim_low(-0.1)
 
-        self.pid_pitch.set_kp(3.0)
+        self.pid_pitch.set_kp(7.5)
         self.pid_pitch.set_ki(0.0)
-        self.pid_pitch.set_kd(1)
+        self.pid_pitch.set_kd(5)
 
-        self.pid_pitch_rate.set_kp(2.5)
+        self.pid_pitch_rate.set_kp(5)
         self.pid_pitch_rate.set_ki(0.0)
-        self.pid_pitch_rate.set_kd(1)
+        self.pid_pitch_rate.set_kd(2.5)
         self.pid_pitch_rate.set_lim_high(0.1)
         self.pid_pitch_rate.set_lim_low(-0.1)
 
@@ -110,6 +110,8 @@ class AttitudeControl:
         rospy.Subscriber('mot_vel_ref', Float32, self.mot_vel_ref_cb)
         rospy.Subscriber('euler_ref', Vector3, self.euler_ref_cb)
         rospy.Subscriber('/clock', Clock, self.clock_cb)
+
+        self.euluer_mv_pub = rospy.Publisher('euler_mv', Vector3, queue_size=1)
 
         # Joint publishers
         self.pub_joint0_left = \
@@ -240,6 +242,11 @@ class AttitudeControl:
                         self.euler_rate_mv.x, dt_clk)
 
                 print "y_sp ", self.euler_sp.y, ' y_mv: ', self.euler_mv.x
+
+                vectorMsg = Vector3()
+                vectorMsg.x = self.euler_mv.x
+                vectorMsg.y = self.euler_mv.y
+                self.euluer_mv_pub.publish(vectorMsg)
 
                 pitch_rate_sv = self.pid_pitch.compute(self.euler_sp.y,
                         self.euler_mv.y, dt_clk)
