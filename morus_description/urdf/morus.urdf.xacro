@@ -3,7 +3,7 @@
 <robot name="morus" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Properties -->
   <xacro:property name="rotor_velocity_slowdown_sim" value="10" />
-  <xacro:property name="mesh_file" value="MORUS_UAV_without_mass.dae" />
+  <xacro:property name="mesh_file" value="MORUS_without_legs.dae" />
   <xacro:property name="mesh_file_mass" value="MORUS_mass.dae" />
   <xacro:property name="mass" value="30" />  <!-- [kg] -->
 
@@ -12,7 +12,7 @@
   <xacro:property name="mass_rotor" value="0.2" /> <!-- [kg] -->
   <xacro:property name="arm_length" value="0.515" /> <!-- [m] -->
   <xacro:property name="arm_offset" value="0.1" /> <!-- [m] -->
-  <xacro:property name="propeler_offset" value="0.5" /> <!--0.325 [m] -->
+  <xacro:property name="propeler_offset" value="0.3" /> <!--0.325 [m] -->
   
   <xacro:property name="rotor_offset_top" value="0.037" /> <!-- [m] -->
   <xacro:property name="radius_rotor" value="0.33" /> <!-- [m] -->
@@ -145,7 +145,7 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Red">
-      <origin xyz="${arm_length+arm_offset + 0.1} 0 ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="${arm_length+arm_offset} 0 ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
@@ -164,7 +164,7 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Blue">
-      <origin xyz="0 ${arm_length+arm_offset + 0.1} ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="0 ${arm_length+arm_offset} ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
@@ -183,7 +183,7 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Red">
-      <origin xyz="${-(arm_length+arm_offset + 0.1)} 0 ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="${-(arm_length+arm_offset)} 0 ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 
@@ -202,7 +202,7 @@
       rotor_drag_coefficient="${rotor_drag_coefficient}"
       rolling_moment_coefficient="${rolling_moment_coefficient}"
       color="Blue">
-      <origin xyz="0 ${-(arm_length+arm_offset + 0.1)} ${propeler_offset}" rpy="0 0 0" />
+      <origin xyz="0 ${-(arm_length+arm_offset)} ${propeler_offset}" rpy="0 0 0" />
       <xacro:insert_block name="rotor_inertia" />
     </xacro:vertical_rotor>
 

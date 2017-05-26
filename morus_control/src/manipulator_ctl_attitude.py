@@ -237,7 +237,8 @@ class AttitudeControl:
                     print self.count, ' - ', dt_clk
 
                 
-                # dt for some reason is 0 sometimes...
+                # dt for some reason is 0 sometimes... 
+                # Causes zero division error in controllers
                 if dt_clk < 10e-10:
                     dt_clk = 0.05
 

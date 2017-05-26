@@ -173,7 +173,7 @@ class HeightControl:
                 # Corrections for HIL
                 # self.mot_speed_hover = 427
 
-                self.mot_speed_hover = 340 
+                self.mot_speed_hover = 380
 
                 # prefilter for reference
 
