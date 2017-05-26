@@ -70,25 +70,27 @@ class AttitudeControl:
         # Add your PID params here
 
         # Matknuti integrator 
-        self.pid_roll.set_kp(7.5)
+        # P - 7-5, D- 5, P - 5, D - 2.5
+
+        self.pid_roll.set_kp(3.0)
         self.pid_roll.set_ki(0.0)
-        self.pid_roll.set_kd(5)
+        self.pid_roll.set_kd(0)
 
-        self.pid_roll_rate.set_kp(5)
+        self.pid_roll_rate.set_kp(2.5)
         self.pid_roll_rate.set_ki(0.0)
-        self.pid_roll_rate.set_kd(2.5)
-        self.pid_roll_rate.set_lim_high(0.1)
-        self.pid_roll_rate.set_lim_low(-0.1)
+        self.pid_roll_rate.set_kd(0)
+        self.pid_roll_rate.set_lim_high(0.3)
+        self.pid_roll_rate.set_lim_low(-0.3)
 
-        self.pid_pitch.set_kp(7.5)
+        self.pid_pitch.set_kp(3)
         self.pid_pitch.set_ki(0.0)
-        self.pid_pitch.set_kd(5)
+        self.pid_pitch.set_kd(0)
 
-        self.pid_pitch_rate.set_kp(5)
+        self.pid_pitch_rate.set_kp(2.5)
         self.pid_pitch_rate.set_ki(0.0)
-        self.pid_pitch_rate.set_kd(2.5)
-        self.pid_pitch_rate.set_lim_high(0.1)
-        self.pid_pitch_rate.set_lim_low(-0.1)
+        self.pid_pitch_rate.set_kd(0)
+        self.pid_pitch_rate.set_lim_high(0.3)
+        self.pid_pitch_rate.set_lim_low(-0.3)
 
         self.pid_yaw.set_kp(0)
         self.pid_yaw.set_ki(0)
@@ -101,7 +103,8 @@ class AttitudeControl:
         # #################################################################
         # #################################################################
 
-        self.rate = 100.0
+        #self.rate = 100.0
+        self.rate = 50
         self.ros_rate = rospy.Rate(self.rate)  # attitude control at 100 Hz
 
         self.t_old = 0
@@ -155,6 +158,10 @@ class AttitudeControl:
         self.x_offset = 0.515
         self.y_offset = 0
 
+        # Inizalize refernce filter
+        self.euler_x_old = 0
+        self.euler_y_old = 0
+
     def initial_position(self):
         print 'Setting initial position'
 
@@ -207,12 +214,9 @@ class AttitudeControl:
 
         while not rospy.is_shutdown():
 
-            #self.ros_rate.sleep()
+            self.ros_rate.sleep()
 
-            try:
-                rospy.sleep(0.1)
-            except Exception:
-                self.t_old = 0
+            #rospy.sleep(0.02)
                 
             
             if not self.start_flag:
@@ -232,23 +236,45 @@ class AttitudeControl:
                     self.count += 1
                     print self.count, ' - ', dt_clk
 
-                roll_rate_sv = self.pid_roll.compute(self.euler_sp.x,
+                
+                # dt for some reason is 0 sometimes...
+                if dt_clk < 10e-10:
+                    dt_clk = 0.05
+
+                # First order reference filter - x
+                if abs(self.euler_x_old - self.euler_sp.x) > 0.03:
+                    a = 0.99
+                else:
+                    a = 0.9
+                ref_x = self.euler_x_old + (1-a) * (self.euler_sp.x - self.euler_x_old)
+                self.euler_x_old = ref_x
+
+                roll_rate_sv = self.pid_roll.compute(ref_x,
                         self.euler_mv.x, dt_clk)
 
-                print "x_sp ", self.euler_sp.x, ' x_mv: ', self.euler_mv.x
+                print "x_sp ", ref_x, ' x_mv: ', self.euler_mv.x
+                
                 # roll rate pid compute
-
                 dy_roll = self.pid_roll_rate.compute(roll_rate_sv,
                         self.euler_rate_mv.x, dt_clk)
 
-                print "y_sp ", self.euler_sp.y, ' y_mv: ', self.euler_mv.x
-
+                # Publish new euler measured values
                 vectorMsg = Vector3()
                 vectorMsg.x = self.euler_mv.x
                 vectorMsg.y = self.euler_mv.y
                 self.euluer_mv_pub.publish(vectorMsg)
 
-                pitch_rate_sv = self.pid_pitch.compute(self.euler_sp.y,
+                # First order reference filter - y
+                if abs(self.euler_y_old - self.euler_sp.y) > 0.03:
+                    a = 0.99
+                else:
+                    a = 0.9
+                ref_y = self.euler_y_old + (1-a) * (self.euler_sp.y - self.euler_y_old)
+                self.euler_y_old = ref_y
+
+                print "y_sp ", ref_y, ' y_mv: ', self.euler_mv.y
+
+                pitch_rate_sv = self.pid_pitch.compute(ref_y,
                         self.euler_mv.y, dt_clk)
 
                 # pitch rate pid compute
@@ -257,8 +283,8 @@ class AttitudeControl:
                         self.euler_rate_mv.y, dt_clk)
 
                 # Calculating angles - inverse Jacobian 
-                dqL = self.get_new_dqL(dx_pitch, -dy_roll, 0.03)
-                dqR = self.get_new_dqR(dx_pitch, -dy_roll, 0.03)
+                dqL = self.get_new_dqL(dx_pitch, -dy_roll, 0.15)
+                dqR = self.get_new_dqR(dx_pitch, -dy_roll, 0.15)
        
                 # Calculate new joint values
                 joint0_right_command_msg = Float64()
@@ -336,7 +362,10 @@ class AttitudeControl:
                - (math.sin(q1R + q2R) + math.sin(q1R)) / (self.l * math.sin(q2R)) * (dy_right_roll)
         except ZeroDivisionError:
             print "ZeroDivisionError"
-            # TODO Handle zero division
+            
+            #dq2r - any value
+            dq2r = 0.1
+            dq1r = dx_right_pitch - math.cos(q2R) / (math.cos(q2R) + 1) * dq2R
         
         print 'dq1R: ', dq1R, ' dq2R: ', dq2R
         print ''
@@ -389,6 +418,10 @@ class AttitudeControl:
         except ZeroDivisionError:
             print "ZeroDivisionError"
             # TODO Handle zero division
+
+            #dq2r - any value
+            dq2r = 0.1
+            dq1r = dx_right_pitch - math.cos(q2R) / (math.cos(q2R) + 1) * dq2R
 
         print 'dq1L: ', dq1L, ' dq2L: ', dq2L
         print ''
