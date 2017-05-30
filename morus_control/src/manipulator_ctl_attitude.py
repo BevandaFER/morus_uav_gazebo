@@ -365,7 +365,7 @@ class AttitudeControl:
             print "ZeroDivisionError"
             
             #dq2r - any value
-            dq2r = 0.1
+            dq2r = 0.01
             dq1r = dx_right_pitch - math.cos(q2R) / (math.cos(q2R) + 1) * dq2R
         
         print 'dq1R: ', dq1R, ' dq2R: ', dq2R
@@ -421,7 +421,7 @@ class AttitudeControl:
             # TODO Handle zero division
 
             #dq2r - any value
-            dq2r = 0.1
+            dq2r = 0.01
             dq1r = dx_right_pitch - math.cos(q2R) / (math.cos(q2R) + 1) * dq2R
 
         print 'dq1L: ', dq1L, ' dq2L: ', dq2L

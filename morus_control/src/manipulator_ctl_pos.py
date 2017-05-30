@@ -37,7 +37,7 @@ class PositionControl(object):
 
         #Initalize controller parameters.
         self.pid_x.set_kp(0.25)
-        self.pid_x.set_kd(0.008)
+        self.pid_x.set_kd(0.0)
         self.pid_x.set_ki(0)
 
         self.pid_vx.set_kp(0.25)
@@ -47,7 +47,7 @@ class PositionControl(object):
         self.pid_vx.set_lim_low(-0.05)
 
         self.pid_y.set_kp(0.25)
-        self.pid_y.set_kd(0.008)
+        self.pid_y.set_kd(0.0)
         self.pid_y.set_ki(0)
 
         self.pid_vy.set_kp(0.25)
