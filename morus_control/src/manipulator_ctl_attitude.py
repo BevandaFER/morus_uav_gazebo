@@ -197,7 +197,7 @@ class AttitudeControl:
         while rospy.get_time() == 0:
             print 'Waiting for clock server to start'
 
-        print 'Received first clock message'
+        print 'Received first clock message - manipulator control'
 
         while not self.start_flag:
             print 'Waiting for the first measurement. (1)'

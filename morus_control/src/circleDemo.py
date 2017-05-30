@@ -16,20 +16,20 @@ def startCirlce():
 		speed = 0.03
 		pub_euler.publish(getVectorMsg(speed, 0, 0))
 		rospy.sleep(sleep_time)
-		pub_euler.publish(getVectorMsg(speed/2, speed*2, 0))
+		pub_euler.publish(getVectorMsg(speed/2, speed*3, 0))
 		rospy.sleep(sleep_time)
 		pub_euler.publish(getVectorMsg(0, speed, 0))
 		rospy.sleep(sleep_time)
-		pub_euler.publish(getVectorMsg(-speed*2, speed/2, 0))
+		pub_euler.publish(getVectorMsg(-speed*3, speed/2, 0))
 		rospy.sleep(sleep_time)
 		pub_euler.publish(getVectorMsg(-speed, 0, 0))
 		rospy.sleep(sleep_time)
-		pub_euler.publish(getVectorMsg(-speed/2, -speed*2, 0))
+		pub_euler.publish(getVectorMsg(-speed/2, -speed*3, 0))
 		rospy.sleep(sleep_time)
 		pub_euler.publish(getVectorMsg(0, -speed, 0))
 		rospy.sleep(sleep_time)
-		pub_euler.publish(getVectorMsg(speed*2, -speed/2, 0))
-		rospy.sleep(sleep_time)
+		pub_euler.publish(getVectorMsg(speed*3, -speed/2, 0))
+		rospy.sleep(sleep_time + 3)
 
 def getVectorMsg(x, y, z):
 
