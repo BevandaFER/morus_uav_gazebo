@@ -129,7 +129,7 @@ class HeightControl:
         print self.start_flag
         print ''
 
-        rospy.sleep(15)
+        rospy.sleep(5)
         while not rospy.is_shutdown():
             
             try:
@@ -173,7 +173,7 @@ class HeightControl:
                 # Corrections for HIL
                 # self.mot_speed_hover = 427
 
-                self.mot_speed_hover = 380
+                self.mot_speed_hover = 400
 
                 # prefilter for reference
 

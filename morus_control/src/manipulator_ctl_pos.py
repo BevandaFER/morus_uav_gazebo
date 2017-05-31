@@ -70,10 +70,14 @@ class PositionControl(object):
     def run(self):
 
         while not self.start_flag1 and not self.start_flag2:
-            print 'Waiting for the first measurement'
+            print 'Waiting for the first measurement / reference'
             rospy.sleep(0.5)
 
         print 'Starting position control.'
+        
+        # Starting reference
+        self.x_ref = 0
+        self.y_ref = 0
 
         clock_old = self.clock
 

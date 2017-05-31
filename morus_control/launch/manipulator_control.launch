@@ -39,9 +39,13 @@
   </group>
 
 
-  <!-- Zakomentirano zbog tuniranja PID regulatora -->
+  <!-- Add manipulator control -->
   <node pkg="morus_control" type="manipulator_ctl_attitude.py" 
     name="manipulator_ctl_attitude" output="screen"  ns="$(arg namespace)">
+  </node>
+
+  <!-- Add position control -->
+  <node pkg="morus_control" type="manipulator_ctl_pos.py" name="mav_position_ctl" output="screen" ns="$(arg namespace)">
   </node>
 
   <!-- Initiate rosbag -->
